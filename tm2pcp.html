@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TM → PCP Dominoes</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 1.5rem;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    label {
+      font-weight: 600;
+    }
+    input[type="text"] {
+      padding: 0.25rem 0.5rem;
+      min-width: 12rem;
+    }
+    button {
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.4rem;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f3f3f3;
+    }
+
+    #tmInfo, #status {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    .container {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .panel {
+      flex: 1 1 320px;
+      border: 1px solid #ddd;
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      min-height: 200px;
+    }
+
+    .panel h2 {
+      font-size: 1.0rem;
+      margin-top: 0;
+    }
+
+    .domino-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .step-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .step-header {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .domino {
+      border: 1px solid #aaa;
+      border-radius: 0.4rem;
+      padding: 0.25rem 0.4rem;
+      width: 90px;
+      font-size: 0.75rem;
+      background: #fff;
+      box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: grab;
+      position: relative;
+    }
+
+    .domino-top, .domino-bottom {
+      text-align: center;
+      padding: 0.1rem 0.15rem;
+      border-radius: 0.2rem;
+    }
+
+    .domino-top {
+      border-bottom: 1px solid #ccc;
+      background: #f8f8f8;
+    }
+
+    .domino-bottom {
+      background: #fdfdfd;
+    }
+
+    #workspace {
+      min-height: 160px;
+      border: 2px dashed #bbb;
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    #workspace.dragover {
+      border-color: #4a90e2;
+      background: #f5f9ff;
+    }
+
+    #concatStrings {
+      margin-top: 0.75rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+    }
+
+    .equal {
+      color: green;
+      font-weight: bold;
+    }
+    .not-equal {
+      color: darkred;
+      font-weight: bold;
+    }
+
+    .small-note {
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -0.45rem;
+      right: -0.45rem;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      font-size: 0.7rem;
+      line-height: 14px;
+      text-align: center;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background: #e6e6e6;
+    }
+
+    /* Color coding per step */
+    .domino.step-1 { border-color: #1f77b4; }
+    .domino.step-1 .domino-top { background: #e8f1fb; }
+
+    .domino.step-2 { border-color: #ff7f0e; }
+    .domino.step-2 .domino-top { background: #ffe9d5; }
+
+    .domino.step-3 { border-color: #2ca02c; }
+    .domino.step-3 .domino-top { background: #e4f4e4; }
+
+    .domino.step-4 { border-color: #d62728; }
+    .domino.step-4 .domino-top { background: #fbe4e4; }
+
+    .domino.step-5 { border-color: #9467bd; }
+    .domino.step-5 .domino-top { background: #efe6fb; }
+
+    .domino.step-6 { border-color: #8c564b; }
+    .domino.step-6 .domino-top { background: #f3e9e6; }
+
+    .domino.step-7 { border-color: #17becf; }
+    .domino.step-7 .domino-top { background: #e5f6f8; }
+
+    .domino.step-8 { border-color: #555; }
+    .domino.step-8 .domino-top { background: #eeeeee; }
+
+    /* Text colors for concatenated strings */
+    .step-text-1 { color: #1f77b4; }
+    .step-text-2 { color: #ff7f0e; }
+    .step-text-3 { color: #2ca02c; }
+    .step-text-4 { color: #d62728; }
+    .step-text-5 { color: #9467bd; }
+    .step-text-6 { color: #8c564b; }
+    .step-text-7 { color: #17becf; }
+    .step-text-8 { color: #555; }
+  </style>
+</head>
+<body>
+
+<h1>TM → PCP Domino Generator</h1>
+
+<div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
+  <strong>Developed by:</strong> Prof. Bruno Iochins Grisci<br>
+  <em>(Webtool built using Generative AI — ChatGPT&nbsp;5.1)</em><br>
+  Departamento de Informática Teórica —
+  <a href="https://www.inf.ufrgs.br/site/" target="_blank">Instituto de Informática</a><br>
+  <a href="https://www.ufrgs.br/site/" target="_blank">Universidade Federal do Rio Grande do Sul (UFRGS)</a><br>
+  Website: <a href="https://brunogrisci.github.io/" target="_blank">https://brunogrisci.github.io/</a>
+  <br><br>
+  <strong>Based and inspired by the class of Prof. Rodrigo Machado:</strong><br>
+  <a href="https://www.youtube.com/watch?v=u66FlodaBf4&list=PLLUEUvJhgJJCC76AYWdWH-GcOS2BogpEN&index=27"
+     target="_blank">
+     https://www.youtube.com/watch?v=u66FlodaBf4&list=PLLUEUvJhgJJCC76AYWdWH-GcOS2BogpEN&index=27
+  </a>
+</div>
+
+<div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
+  <strong>Input format:</strong><br>
+  This webtool accepts a <code>.mt</code> file describing a Turing Machine created using the
+  <strong>Simulador de Máquina de Turing</strong> developed by Prof. Rodrigo Machado:<br>
+  <a href="https://www.inf.ufrgs.br/~rma/simuladores/turing.html" target="_blank">
+    https://www.inf.ufrgs.br/~rma/simuladores/turing.html
+  </a><br>
+  The <code>.mt</code> file encodes the input &amp; auxiliary alphabet, states, transitions, marker and blank symbols.
+</div>
+
+<div class="row">
+  <div>
+    <label for="mtFile">.mt file: </label>
+    <input type="file" id="mtFile" accept=".mt">
+  </div>
+  <div>
+    <label for="inputWord">Input word w: </label>
+    <input type="text" id="inputWord" placeholder="e.g., ()">
+  </div>
+  <div>
+    <button id="generateBtn">Generate dominoes</button>
+  </div>
+  <div style="display:flex; align-items:center; gap:0.3rem;">
+    <label style="font-weight:400; cursor:pointer;">
+      <input type="checkbox" id="toggleMPCP">
+      MPCP ⇒ PCP
+    </label>
+  </div>
+</div>
+
+<div id="tmInfo"></div>
+<div id="status"></div>
+
+<div class="container">
+  <div class="panel">
+    <h2>Domino palette</h2>
+    <div class="small-note">
+      Dominoes are grouped and color-coded by construction step.  
+      When “MPCP ⇒ PCP” is checked, you see the PCP instance, but still separated by their original steps.
+    </div>
+    <div id="dominoPalette"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Workspace (sequence of dominoes)</h2>
+    <div class="small-note">
+      Drop tiles here in order. You can reorder or delete individual tiles.  
+      The Top/Bottom strings below are color-coded according to the step each symbol came from.
+    </div>
+    <div id="workspace"></div>
+    <button id="clearWorkspaceBtn" style="margin-top:0.5rem;">Clear workspace</button>
+    <div id="concatStrings"></div>
+  </div>
+</div>
+
+<script>
+  // Global state
+  let currentTM = null;
+  let mpcpDominoes = [];
+  let currentDominoes = [];
+
+  function showStatus(msg, isError=false) {
+    const st = document.getElementById('status');
+    st.textContent = msg || '';
+    st.style.color = isError ? 'darkred' : '#333';
+  }
+
+  // ----- Parsing the .mt file (Rodrigo's format, with comments) -----
+
+  function parseMt(content) {
+    const rawLines = content.split(/\r?\n/);
+
+    // We expect at least 7 lines:
+    // 0: input alphabet
+    // 1: auxiliary alphabet
+    // 2: marker
+    // 3: blank
+    // 4: states
+    // 5: initial state
+    // 6: accepting states
+    if (rawLines.length < 7) {
+      throw new Error(
+        "Unexpected .mt format: need at least 7 lines " +
+        "(alphabet, aux alphabet, marker, blank, states, initial, accepting)."
+      );
+    }
+
+    const line = (idx) =>
+      idx < rawLines.length ? rawLines[idx].trim() : "";
+
+    // Header lines (always interpreted literally – '#' is just another symbol)
+    const inputAlphabetLine = line(0);
+    const auxAlphabetLine   = line(1);
+    const markerSymbol      = line(2);
+    const blankSymbol       = line(3);
+    const statesLine        = line(4);
+    const initialState      = line(5);
+    const acceptStatesLine  = line(6);  // may be empty => no accepting states
+
+    // Line 8 (index 7): transition matrix (may be missing or empty)
+    const transitionsLine   = line(7);
+
+    // Everything below the transition matrix is a free comment block
+    const commentBlock = rawLines.slice(8).join("\n").trim();
+
+    const parseCSV = (line) =>
+      line
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+    const inputAlphabet = parseCSV(inputAlphabetLine);
+    const auxAlphabet   = parseCSV(auxAlphabetLine);
+    const states        = parseCSV(statesLine);
+    const acceptStates  = parseCSV(acceptStatesLine);
+
+    // Tape alphabet = input ∪ auxiliary
+    const tapeAlphabet = Array.from(new Set([...inputAlphabet, ...auxAlphabet]));
+
+    // Parse transitions from transitionsLine (if any)
+    const transitions = [];
+    if (transitionsLine && transitionsLine.trim().length > 0) {
+      const parts = transitionsLine
+        .split(",,,")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      for (const part of parts) {
+        const f = part.split(",").map((s) => s.trim());
+        if (f.length < 5) continue;
+
+        let q, a, q2, b, dir;
+        if (f.length === 6 && f[2] === "") {
+          // Format: q, a, "", q2, b, dir
+          [q, a, , q2, b, dir] = f;
+        } else if (f.length === 5) {
+          // Format: q, a, q2, b, dir
+          [q, a, q2, b, dir] = f;
+        } else {
+          // More fields than expected: take first, second, and last three
+          q   = f[0];
+          a   = f[1];
+          q2  = f[f.length - 3];
+          b   = f[f.length - 2];
+          dir = f[f.length - 1];
+        }
+        transitions.push({ q, a, q2, b, dir });
+      }
+    }
+
+    return {
+      inputAlphabet,
+      auxAlphabet,
+      alphabet: tapeAlphabet,   // Σ ∪ Γ
+      markerSymbol,
+      blankSymbol,
+      states,
+      initialState,
+      acceptStates,             // may be []
+      transitions,
+      comment: commentBlock     // free text after matrix
+    };
+  }
+
+
+
+  function tokenizeWord(w) {
+    // For now, treat each character as a tape symbol (ignoring spaces)
+    return w.split("").filter(ch => ch !== " ");
+  }
+
+  function buildSymbolSet(tm, inputTokens) {
+    const S = new Set();
+    for (const a of tm.alphabet) S.add(a);
+    S.add(tm.markerSymbol);
+    S.add(tm.blankSymbol);
+    for (const tr of tm.transitions) {
+      if (tr.a) S.add(tr.a);
+      if (tr.b) S.add(tr.b);
+    }
+    for (const t of inputTokens) S.add(t);
+    return Array.from(S);
+  }
+
+  // Domino: { top: [tokens], bottom: [tokens], info: string, step: 1..8 }
+
+  function chooseFreshSymbol(preferred, used) {
+    const candidates = [
+      preferred,
+      "⋆", "☆", "@", "§", "+", "◊", "◆", "◇"
+    ];
+    for (const c of candidates) {
+      if (!used.has(c)) return c;
+    }
+    let i = 1;
+    while (used.has(preferred + i)) i++;
+    return preferred + i;
+  }
+
+  function buildDominoes(tm, inputWord) {
+    const wTokens = tokenizeWord(inputWord);
+
+    // All symbols that come from the original TM + input word
+    const baseSymbols = buildSymbolSet(tm, wTokens);
+
+    // Choose a fresh boundary symbol (HASH) that is NOT in TM symbols
+    const usedForHash = new Set(baseSymbols);
+    const HASH = chooseFreshSymbol("#", usedForHash);
+
+    // S is the set of "TM-related" symbols that can appear on the tape
+    const S = baseSymbols;
+    const q0 = tm.initialState;
+    const acceptStates = tm.acceptStates || [];
+
+    const dominos = [];
+
+    function addDomino(topTokens, bottomTokens, info, step) {
+      dominos.push({
+        top: topTokens.slice(),
+        bottom: bottomTokens.slice(),
+        info: info || "",
+        step: step
+      });
+    }
+
+    // 1) Initial piece: # / # q0 © w #
+    addDomino(
+      [HASH],
+      [HASH, q0, tm.markerSymbol, ...wTokens, HASH],
+      "Step 1: initial configuration",
+      1
+    );
+
+    // 2) Right moves: q,a → q',b,D for non-accepting q
+    for (const tr of tm.transitions) {
+      const {q, a, q2, b, dir} = tr;
+      if (!a || !b || !q || !q2) continue;
+      if (acceptStates.includes(q)) continue; // TM halts on acceptance
+      if (dir === "D") {
+        addDomino(
+          [q, a],
+          [b, q2],
+          "Step 2: right move " + q + "," + a + " → (" + q2 + "," + b + ",D)",
+          2
+        );
+      }
+    }
+
+    // 3) Left moves: q,a → q',b,E for non-accepting q, for all c in S
+    for (const tr of tm.transitions) {
+      const {q, a, q2, b, dir} = tr;
+      if (!a || !b || !q || !q2) continue;
+      if (acceptStates.includes(q)) continue;
+      if (dir === "E") {
+        for (const c of S) {
+          addDomino(
+            [c, q, a],
+            [q2, c, b],
+            "Step 3: left move " + q + "," + a + " → (" + q2 + "," + b + ",E)",
+            3
+          );
+        }
+      }
+    }
+
+    // 4) Copying tiles
+    for (const a of S) {
+      addDomino(
+        [a],
+        [a],
+        "Step 4: copy symbol " + a,
+        4
+      );
+    }
+
+    // 5) #/# and #/β#   (using the fresh HASH)
+    addDomino([HASH], [HASH], "Step 5: boundary #/#", 5);
+    addDomino([HASH], [tm.blankSymbol, HASH], "Step 5: boundary #/β#", 5);
+
+    // 6) a q_f / q_f and q_f a / q_f for each accepting state q_f
+    for (const qf of acceptStates) {
+      for (const a of S) {
+        addDomino([a, qf], [qf], "Step 6: collapse a " + qf + " → " + qf, 6);
+        addDomino([qf, a], [qf], "Step 6: collapse " + qf + " a → " + qf, 6);
+      }
+    }
+
+    // 7) q_f ## / #   (using the fresh HASH) for each accepting state q_f
+    for (const qf of acceptStates) {
+      addDomino(
+        [qf, HASH, HASH],
+        [HASH],
+        "Step 7: final cleanup " + qf + "##/#",
+        7
+      );
+    }
+
+    return dominos;
+  }
+
+  function renderTMInfo(tm) {
+    const div = document.getElementById('tmInfo');
+    if (!tm) {
+      div.textContent = "";
+      return;
+    }
+
+    let text =
+      "Parsed Turing Machine:\n" +
+      "  Input alphabet (Σ): " + tm.inputAlphabet.join(", ") + "\n" +
+      "  Auxiliary alphabet (Γ \\ Σ): " +
+        (tm.auxAlphabet && tm.auxAlphabet.length
+           ? tm.auxAlphabet.join(", ")
+           : "∅") + "\n" +
+      "  Tape alphabet (Σ ∪ Γ): " + tm.alphabet.join(", ") + "\n" +
+      "  Marker (beg. of tape): " + tm.markerSymbol + "\n" +
+      "  Blank (β): " + tm.blankSymbol + "\n" +
+      "  States (Q): " + tm.states.join(", ") + "\n" +
+      "  Initial state (q0): " + tm.initialState + "\n" +
+      "  Accepting states (F): " +
+        (tm.acceptStates && tm.acceptStates.length
+           ? tm.acceptStates.join(", ")
+           : "∅") + "\n" +
+      "  #Transitions: " + tm.transitions.length;
+
+    if (tm.comment && tm.comment.trim().length > 0) {
+      text += "\n\nComment (from .mt file):\n" + tm.comment;
+    }
+
+    div.textContent = text;
+  }
+
+
+
+
+  function tokensToDisplay(tokens) {
+    return tokens.join(" ");
+  }
+
+  function renderDominoPalette(dominos) {
+    const palette = document.getElementById('dominoPalette');
+    palette.innerHTML = "";
+
+    const steps = Array.from(new Set(dominos.map(d => d.step))).sort((a, b) => a - b);
+    const usePCP = document.getElementById('toggleMPCP')?.checked;
+
+    steps.forEach(step => {
+      const groupDominos = dominos.filter(d => d.step === step);
+      if (groupDominos.length === 0) return;
+
+      const group = document.createElement('div');
+      group.className = 'step-group';
+
+      const header = document.createElement('div');
+      header.className = 'step-header';
+
+      if (step === 8) {
+        header.textContent = "Step 8 (closing tile for MPCP ⇒ PCP)";
+      } else if (usePCP) {
+        header.textContent = "Step " + step + " (PCP, from original Step " + step + ")";
+      } else {
+        header.textContent = "Step " + step;
+      }
+
+      group.appendChild(header);
+
+      const list = document.createElement('div');
+      list.className = 'domino-list';
+
+      for (let i = 0; i < dominos.length; i++) {
+        const d = dominos[i];
+        if (d.step !== step) continue;
+
+        const el = document.createElement('div');
+        el.className = 'domino step-' + step;
+        el.draggable = true;
+        el.dataset.dominoIndex = String(i);
+        el.title = d.info;
+
+        const top = document.createElement('div');
+        top.className = 'domino-top';
+        top.textContent = tokensToDisplay(d.top);
+
+        const bottom = document.createElement('div');
+        bottom.className = 'domino-bottom';
+        bottom.textContent = tokensToDisplay(d.bottom);
+
+        el.appendChild(top);
+        el.appendChild(bottom);
+
+        el.addEventListener('dragstart', (ev) => {
+          ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
+        });
+
+        list.appendChild(el);
+      }
+
+      group.appendChild(list);
+      palette.appendChild(group);
+    });
+  }
+
+  function createWorkspaceTile(idx) {
+    const workspace = document.getElementById('workspace');
+    const d = currentDominoes[idx];
+
+    const tile = document.createElement('div');
+    tile.className = 'domino step-' + d.step;
+    tile.dataset.dominoIndex = String(idx);
+    tile.draggable = true;
+    tile.title = d.info;
+
+    const top = document.createElement('div');
+    top.className = 'domino-top';
+    top.textContent = tokensToDisplay(d.top);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'domino-bottom';
+    bottom.textContent = tokensToDisplay(d.bottom);
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.textContent = '×';
+    delBtn.title = 'Remove this tile';
+
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tile.remove();
+      concatWorkspaceStrings();
+    });
+
+    tile.appendChild(top);
+    tile.appendChild(bottom);
+    tile.appendChild(delBtn);
+
+    tile.addEventListener('dragstart', (ev) => {
+      const children = Array.from(workspace.children);
+      const fromIndex = children.indexOf(tile);
+      ev.dataTransfer.setData('text/plain', 'workspace:' + fromIndex);
+    });
+
+    return tile;
+  }
+
+  function concatWorkspaceStrings() {
+    const workspace = document.getElementById('workspace');
+    const children = Array.from(workspace.querySelectorAll('.domino'));
+
+    const topSeq = [];
+    const bottomSeq = [];
+
+    for (const ch of children) {
+      const idx = parseInt(ch.dataset.dominoIndex, 10);
+      const d = currentDominoes[idx];
+      const step = d.step;
+      for (const sym of d.top) {
+        topSeq.push({ sym, step });
+      }
+      for (const sym of d.bottom) {
+        bottomSeq.push({ sym, step });
+      }
+    }
+
+    const concatDiv = document.getElementById('concatStrings');
+    if (children.length === 0) {
+      concatDiv.textContent = "";
+      return;
+    }
+
+    function seqToHTML(seq) {
+      return seq.map(t => {
+        const cls = `step-text-${t.step}`;
+        const safeSym = String(t.sym)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<span class="${cls}">${safeSym}</span>`;
+      }).join(" ");
+    }
+
+    const topHTML = seqToHTML(topSeq);
+    const bottomHTML = seqToHTML(bottomSeq);
+
+    const equal = topSeq.map(t => t.sym).join("|") === bottomSeq.map(t => t.sym).join("|");
+
+    concatDiv.innerHTML =
+      `Top:    ${topHTML}<br>` +
+      `Bottom: ${bottomHTML}<br><br>` +
+      (equal
+        ? "<span class='equal'>Top and bottom are equal ✔</span>"
+        : "<span class='not-equal'>Top and bottom differ ✘</span>");
+  }
+
+  function setupWorkspaceDnD() {
+    const workspace = document.getElementById('workspace');
+
+    workspace.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      workspace.classList.add('dragover');
+    });
+
+    workspace.addEventListener('dragleave', () => {
+      workspace.classList.remove('dragover');
+    });
+
+    workspace.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      workspace.classList.remove('dragover');
+
+      const data = ev.dataTransfer.getData('text/plain');
+      if (!data) return;
+      const [src, idxStr] = data.split(':');
+      const workspaceChildren = Array.from(workspace.children);
+
+      let targetTile = ev.target.closest('.domino');
+      if (targetTile && targetTile.parentElement !== workspace) {
+        targetTile = null;
+      }
+
+      if (src === 'palette') {
+        const idx = parseInt(idxStr, 10);
+        if (isNaN(idx)) return;
+        const newTile = createWorkspaceTile(idx);
+
+        if (!targetTile) {
+          workspace.appendChild(newTile);
+        } else {
+          const rect = targetTile.getBoundingClientRect();
+          const before = ev.clientX < rect.left + rect.width / 2;
+          if (before) workspace.insertBefore(newTile, targetTile);
+          else workspace.insertBefore(newTile, targetTile.nextSibling);
+        }
+      } else if (src === 'workspace') {
+        const fromIndex = parseInt(idxStr, 10);
+        if (isNaN(fromIndex)) return;
+        const dragged = workspaceChildren[fromIndex];
+        if (!dragged) return;
+
+        if (!targetTile || targetTile === dragged) {
+          workspace.appendChild(dragged);
+        } else {
+          const rect = targetTile.getBoundingClientRect();
+          const before = ev.clientX < rect.left + rect.width / 2;
+          if (before) {
+            workspace.insertBefore(dragged, targetTile);
+          } else {
+            workspace.insertBefore(dragged, targetTile.nextSibling);
+          }
+        }
+      }
+
+      concatWorkspaceStrings();
+    });
+  }
+
+  // ----- MPCP → PCP transformation -----
+
+  function computeUsedSymbols(dominos) {
+    const used = new Set();
+    for (const d of dominos) {
+      for (const t of d.top) used.add(t);
+      for (const t of d.bottom) used.add(t);
+    }
+    return used;
+  }
+
+  function starPrefix(seq, star) {
+    const res = [];
+    for (const s of seq) {
+      res.push(star, s);
+    }
+    return res;
+  }
+
+  function starSuffix(seq, star) {
+    const res = [];
+    for (const s of seq) {
+      res.push(s, star);
+    }
+    return res;
+  }
+
+  function starBoth(seq, star) {
+    const res = [star];
+    for (const s of seq) {
+      res.push(s, star);
+    }
+    return res;
+  }
+
+  // Transform MPCP dominoes into PCP dominoes, preserving original step (1..7)
+  function transformMPCPtoPCP(mpcpDominoes) {
+    if (!mpcpDominoes || mpcpDominoes.length === 0) return [];
+
+    const used = computeUsedSymbols(mpcpDominoes);
+    const starSym = chooseFreshSymbol("*", used);
+    used.add(starSym);
+    const diamondSym = chooseFreshSymbol("⋄", used);
+
+    const PCP = [];
+
+    const first = mpcpDominoes[0];
+    const t1 = first.top;
+    const b1 = first.bottom;
+    const s1 = first.step;
+
+    // (⋆t1 / ⋆b1⋆)
+    PCP.push({
+      top: starPrefix(t1, starSym),
+      bottom: starBoth(b1, starSym),
+      info: "PCP (from Step " + s1 + "): forcing first tile (⋆t₁ / ⋆b₁⋆)",
+      step: s1
+    });
+
+    // (⋆t1 / b1⋆)
+    PCP.push({
+      top: starPrefix(t1, starSym),
+      bottom: starSuffix(b1, starSym),
+      info: "PCP (from Step " + s1 + "): continuation (⋆t₁ / b₁⋆)",
+      step: s1
+    });
+
+    // (⋆ti / bi⋆) for i >= 2
+    for (let i = 1; i < mpcpDominoes.length; i++) {
+      const d = mpcpDominoes[i];
+      PCP.push({
+        top: starPrefix(d.top, starSym),
+        bottom: starSuffix(d.bottom, starSym),
+        info: "PCP (from Step " + d.step + "): tile from MPCP index " + (i + 1),
+        step: d.step
+      });
+    }
+
+    // Closing tile *⋄ / ⋄
+    PCP.push({
+      top: [starSym, diamondSym],
+      bottom: [diamondSym],
+      info: "PCP: closing tile " + starSym + diamondSym + "/" + diamondSym,
+      step: 8
+    });
+
+    return PCP;
+  }
+
+  function updateDominoView() {
+    const toggle = document.getElementById('toggleMPCP');
+    const usePCP = toggle && toggle.checked;
+
+    if (!mpcpDominoes || mpcpDominoes.length === 0) {
+      currentDominoes = [];
+      renderDominoPalette([]);
+      document.getElementById('workspace').innerHTML = "";
+      concatWorkspaceStrings();
+      showStatus("No MPCP dominoes to display.");
+      return;
+    }
+
+    const N = mpcpDominoes.length;
+
+    if (usePCP) {
+      currentDominoes = transformMPCPtoPCP(mpcpDominoes);
+      const K = currentDominoes.length;
+      showStatus(
+        "Showing PCP instance with " + K + " dominoes " +
+        "(derived from " + N + " MPCP dominoes)."
+      );
+    } else {
+      currentDominoes = mpcpDominoes.slice();
+      showStatus("Showing original " + N + " MPCP dominoes.");
+    }
+
+    renderDominoPalette(currentDominoes);
+    document.getElementById('workspace').innerHTML = "";
+    concatWorkspaceStrings();
+  }
+
+  // ----- Wiring UI events -----
+
+  document.getElementById('mtFile').addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if (!file) {
+      currentTM = null;
+      mpcpDominoes = [];
+      currentDominoes = [];
+      renderTMInfo(null);
+      renderDominoPalette([]);
+      document.getElementById('workspace').innerHTML = "";
+      concatWorkspaceStrings();
+      showStatus("");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        currentTM = parseMt(e.target.result);
+        renderTMInfo(currentTM);
+        showStatus("Turing machine parsed successfully.");
+      } catch (err) {
+        console.error(err);
+        showStatus("Error parsing .mt file: " + err.message, true);
+        currentTM = null;
+        renderTMInfo(null);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    if (!currentTM) {
+      showStatus("Please load a .mt file first.", true);
+      return;
+    }
+    const w = document.getElementById('inputWord').value || "";
+    try {
+      mpcpDominoes = buildDominoes(currentTM, w);
+      updateDominoView();
+    } catch (err) {
+      console.error(err);
+      showStatus("Error generating dominoes: " + err.message, true);
+    }
+  });
+
+  document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
+    document.getElementById('workspace').innerHTML = "";
+    concatWorkspaceStrings();
+  });
+
+  document.getElementById('toggleMPCP').addEventListener('change', () => {
+    if (!mpcpDominoes || mpcpDominoes.length === 0) {
+      return;
+    }
+    updateDominoView();
+  });
+
+  setupWorkspaceDnD();
+</script>
+
+</body>
+</html>

@@ -93,6 +93,37 @@
       color: #fbbf24;
     }
 
+    /* Make left (TM info) and right (table) align bottom inside tm-summary */
+    .tm-summary {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: flex-end; /* <--- bottom alignment */
+      gap: 1rem;
+    }
+
+    /* Right panel containing label + table */
+    #tmTableContainer {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end; /* <--- push table to bottom */
+    }
+
+    /* Label above the table */
+    #tmTableLabel {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Ensure long comments on the left do NOT stretch the height of the right panel */
+    #tmInfo {
+      flex: 1 1 auto;
+      max-width: 50%;
+      overflow-y: auto;   /* scroll long comments instead */
+      max-height: 250px;  /* prevents pushing table down */
+    }
+
 
     :root {
       --bg: #ffffff;
@@ -440,8 +471,13 @@
 
 <div class="tm-summary">
   <div id="tmInfo"></div>
-  <div id="tmTable"></div>
+
+  <div id="tmTableContainer">
+    <div id="tmTableLabel">Transition Table (δ)</div>
+    <div id="tmTable"></div>
+  </div>
 </div>
+
 <div id="status"></div>
 
 
@@ -855,7 +891,7 @@
     html += '</tbody></table>';
     container.innerHTML = html;
   }
-    
+
 
   function tokensToDisplay(tokens) {
     return tokens.join(" ");

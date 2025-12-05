@@ -960,14 +960,13 @@
     });
   }
 
-  function createWorkspaceTile(idx) {
+  function createWorkspaceTile(idx, fixed = false) {
     const workspace = document.getElementById('workspace');
     const d = currentDominoes[idx];
 
     const tile = document.createElement('div');
     tile.className = 'domino step-' + d.step;
     tile.dataset.dominoIndex = String(idx);
-    tile.draggable = true;
     tile.title = d.info;
 
     const top = document.createElement('div');
@@ -978,29 +977,39 @@
     bottom.className = 'domino-bottom';
     bottom.textContent = tokensToDisplay(d.bottom);
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'delete-btn';
-    delBtn.textContent = '×';
-    delBtn.title = 'Remove this tile';
-
-    delBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      tile.remove();
-      concatWorkspaceStrings();
-    });
-
     tile.appendChild(top);
     tile.appendChild(bottom);
-    tile.appendChild(delBtn);
 
-    tile.addEventListener('dragstart', (ev) => {
-      const children = Array.from(workspace.children);
-      const fromIndex = children.indexOf(tile);
-      ev.dataTransfer.setData('text/plain', 'workspace:' + fromIndex);
-    });
+    if (fixed) {
+      // Fixed initial MPCP tile: cannot be moved or deleted
+      tile.dataset.fixed = "true";
+      tile.draggable = false;
+    } else {
+      tile.draggable = true;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.textContent = '×';
+      delBtn.title = 'Remove this tile';
+
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tile.remove();
+        concatWorkspaceStrings();
+      });
+
+      tile.appendChild(delBtn);
+
+      tile.addEventListener('dragstart', (ev) => {
+        const children = Array.from(workspace.children);
+        const fromIndex = children.indexOf(tile);
+        ev.dataTransfer.setData('text/plain', 'workspace:' + fromIndex);
+      });
+    }
 
     return tile;
   }
+
 
   function concatWorkspaceStrings() {
     const workspace = document.getElementById('workspace');
@@ -1086,9 +1095,18 @@
           workspace.appendChild(newTile);
         } else {
           const rect = targetTile.getBoundingClientRect();
-          const before = ev.clientX < rect.left + rect.width / 2;
-          if (before) workspace.insertBefore(newTile, targetTile);
-          else workspace.insertBefore(newTile, targetTile.nextSibling);
+          let before = ev.clientX < rect.left + rect.width / 2;
+
+          // If target is fixed and we would insert BEFORE it, force AFTER
+          if (targetTile.dataset.fixed === "true" && before) {
+            before = false;
+          }
+
+          if (before) {
+            workspace.insertBefore(newTile, targetTile);
+          } else {
+            workspace.insertBefore(newTile, targetTile.nextSibling);
+          }
         }
       } else if (src === 'workspace') {
         const fromIndex = parseInt(idxStr, 10);
@@ -1100,7 +1118,13 @@
           workspace.appendChild(dragged);
         } else {
           const rect = targetTile.getBoundingClientRect();
-          const before = ev.clientX < rect.left + rect.width / 2;
+          let before = ev.clientX < rect.left + rect.width / 2;
+
+          // Never insert before fixed tile
+          if (targetTile.dataset.fixed === "true" && before) {
+            before = false;
+          }
+
           if (before) {
             workspace.insertBefore(dragged, targetTile);
           } else {
@@ -1108,6 +1132,7 @@
           }
         }
       }
+
 
       concatWorkspaceStrings();
     });
@@ -1268,10 +1293,24 @@
       showStatus("Showing original " + N + " MPCP dominoes.");
     }
 
-    renderDominoPalette(currentDominoes);
-    document.getElementById('workspace').innerHTML = "";
+  renderDominoPalette(currentDominoes);
+
+  const workspace = document.getElementById('workspace');
+  workspace.innerHTML = "";
+
+  if (usePCP) {
+    // PCP: workspace starts empty
+    concatWorkspaceStrings();
+  } else {
+    // MPCP: place the first domino (step 1) as a fixed, non-removable, first tile
+    if (currentDominoes.length > 0) {
+      const fixedTile = createWorkspaceTile(0, true);
+      workspace.appendChild(fixedTile);
+    }
     concatWorkspaceStrings();
   }
+}
+
 
   // ----- Wiring UI events -----
 
@@ -1320,9 +1359,24 @@
   });
 
   document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
-    document.getElementById('workspace').innerHTML = "";
+    const workspace = document.getElementById('workspace');
+    const usePCP = document.getElementById('toggleMPCP')?.checked;
+
+    if (usePCP) {
+      // PCP: clear everything
+      workspace.innerHTML = "";
+    } else {
+      // MPCP: keep the fixed first tile (if any), remove the rest
+      const children = Array.from(workspace.children);
+      const fixed = children.find(ch => ch.dataset && ch.dataset.fixed === "true");
+      workspace.innerHTML = "";
+      if (fixed) {
+        workspace.appendChild(fixed);
+      }
+    }
     concatWorkspaceStrings();
   });
+
 
   document.getElementById('toggleMPCP').addEventListener('change', () => {
     if (!mpcpDominoes || mpcpDominoes.length === 0) {

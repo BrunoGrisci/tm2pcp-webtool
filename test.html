@@ -76,6 +76,37 @@
       top: 0;
     }
 
+    /* Highlighting for transition table selection */
+    .tm-row-highlight > th,
+    .tm-row-highlight > td {
+      background-color: #fef3c7; /* soft amber */
+    }
+    body.dark-mode .tm-row-highlight > th,
+    body.dark-mode .tm-row-highlight > td {
+      background-color: #4b3b16;
+    }
+
+    .tm-col-header-highlight {
+      background-color: #e0f2fe; /* soft blue */
+    }
+    body.dark-mode .tm-col-header-highlight {
+      background-color: #1e3a5f;
+    }
+
+    .tm-col-highlight {
+      background-color: #e0f2fe;
+    }
+    body.dark-mode .tm-col-highlight {
+      background-color: #1e3a5f;
+    }
+
+    .tm-cell-highlight {
+      outline: 2px solid #dc2626;
+      outline-offset: -2px;
+      font-weight: 700;
+    }
+
+
     .tm-state-cell {
       text-align: left;
       white-space: nowrap;
@@ -519,6 +550,74 @@
       .replace(/>/g, "&gt;");
   }
 
+  function clearTransitionHighlight() {
+    const table = document.querySelector('.tm-table');
+    if (!table) return;
+
+    table.querySelectorAll('.tm-row-highlight').forEach(tr => {
+      tr.classList.remove('tm-row-highlight');
+    });
+    table.querySelectorAll('.tm-col-header-highlight').forEach(th => {
+      th.classList.remove('tm-col-header-highlight');
+    });
+    table.querySelectorAll('.tm-col-highlight').forEach(td => {
+      td.classList.remove('tm-col-highlight');
+    });
+    table.querySelectorAll('.tm-cell-highlight').forEach(td => {
+      td.classList.remove('tm-cell-highlight');
+    });
+  }
+
+  function highlightTransition(q, a) {
+    clearTransitionHighlight();
+    const table = document.querySelector('.tm-table');
+    if (!table) return;
+
+    // Row highlight
+    const row = table.querySelector(`tbody tr[data-state="${CSS.escape(q)}"]`);
+    if (row) {
+      row.classList.add('tm-row-highlight');
+    }
+
+    // Column header and index
+    const colHeader = table.querySelector(
+      `.tm-col-header[data-symbol="${CSS.escape(a)}"]`
+    );
+    if (!colHeader) return;
+
+    colHeader.classList.add('tm-col-header-highlight');
+
+    const headerCells = Array.from(colHeader.parentNode.children);
+    const colIndex = headerCells.indexOf(colHeader);
+    if (colIndex < 0) return;
+
+    // Highlight every cell in that column
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const cells = tr.children;
+      if (colIndex < cells.length) {
+        cells[colIndex].classList.add('tm-col-highlight');
+      }
+    });
+
+    // Specific cell highlight
+    const cell = table.querySelector(
+      `td[data-q="${CSS.escape(q)}"][data-a="${CSS.escape(a)}"]`
+    );
+    if (cell) {
+      cell.classList.add('tm-cell-highlight');
+    }
+  }
+
+  // Convenience: derive (q,a) from domino index
+  function highlightTransitionFromDominoIndex(idx) {
+    const d = currentDominoes[idx];
+    if (!d || (d.step !== 2 && d.step !== 3) || !d.srcQ || !d.srcA) {
+      clearTransitionHighlight();
+      return;
+    }
+    highlightTransition(d.srcQ, d.srcA);
+  }
+
 
   // Set current year in footer
   (function () {
@@ -690,14 +789,18 @@
 
     const dominos = [];
 
-    function addDomino(topTokens, bottomTokens, info, step) {
+    // NEW: optional q,a metadata for steps 2 and 3
+    function addDomino(topTokens, bottomTokens, info, step, srcQ = null, srcA = null) {
       dominos.push({
         top: topTokens.slice(),
         bottom: bottomTokens.slice(),
         info: info || "",
-        step: step
+        step: step,
+        srcQ,
+        srcA
       });
     }
+
 
     // 1) Initial piece
     addDomino(
@@ -717,7 +820,8 @@
           [q, a],
           [b, q2],
           "Step 2: right move " + q + "," + a + " → (" + q2 + "," + b + ",D)",
-          2
+          2,
+          q, a   // <--- track (q,a)
         );
       }
     }
@@ -733,11 +837,13 @@
             [c, q, a],
             [q2, c, b],
             "Step 3: left move " + q + "," + a + " → (" + q2 + "," + b + ",E)",
-            3
+            3,
+            q, a   // <--- track (q,a)
           );
         }
       }
     }
+
 
     // 4) Copying tiles
     for (const a of S) {
@@ -808,6 +914,8 @@
 
     // NEW: render transition table to the right
     renderTransitionTable(tm);
+    clearTransitionHighlight();
+
   }
 
 
@@ -856,7 +964,7 @@
     let html = '<table class="tm-table"><thead><tr>';
     html += '<th>q / a</th>';
     for (const a of tapeSymbols) {
-      html += `<th>${escapeHtml(a)}</th>`;
+      html += `<th class="tm-col-header" data-symbol="${escapeHtml(a)}">${escapeHtml(a)}</th>`;
     }
     html += '</tr></thead><tbody>';
 
@@ -873,24 +981,26 @@
       if (isInit)  stateClass += " tm-state-cell-init";
       if (isAcc)   stateClass += " tm-state-cell-accept";
 
-      html += `<tr><th class="${stateClass}">${escapeHtml(label)}</th>`;
+      html += `<tr data-state="${escapeHtml(q)}"><th class="${stateClass}">${escapeHtml(label)}</th>`;
 
       for (const a of tapeSymbols) {
         const key = q + "||" + a;
         const tr = transMap.get(key);
         if (tr) {
           const cell = `${tr.q2},${tr.b},${tr.dir}`;
-          html += `<td>${escapeHtml(cell)}</td>`;
+          html += `<td data-q="${escapeHtml(q)}" data-a="${escapeHtml(a)}">${escapeHtml(cell)}</td>`;
         } else {
-          html += '<td>–</td>';
+          html += `<td data-q="${escapeHtml(q)}" data-a="${escapeHtml(a)}">–</td>`;
         }
       }
+
       html += '</tr>';
     }
 
     html += '</tbody></table>';
     container.innerHTML = html;
   }
+ 
 
 
   function tokensToDisplay(tokens) {
@@ -950,7 +1060,24 @@
 
         el.addEventListener('dragstart', (ev) => {
           ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
+          highlightTransitionFromDominoIndex(i);
         });
+
+        el.addEventListener('dragend', () => {
+          clearTransitionHighlight();
+        });
+
+        // Optional: highlight on mouse down / hover "hold"
+        el.addEventListener('mousedown', () => {
+          highlightTransitionFromDominoIndex(i);
+        });
+        el.addEventListener('mouseup', () => {
+          clearTransitionHighlight();
+        });
+        el.addEventListener('mouseleave', () => {
+          clearTransitionHighlight();
+        });
+
 
         list.appendChild(el);
       }
@@ -1004,6 +1131,21 @@
         const children = Array.from(workspace.children);
         const fromIndex = children.indexOf(tile);
         ev.dataTransfer.setData('text/plain', 'workspace:' + fromIndex);
+        highlightTransitionFromDominoIndex(parseInt(tile.dataset.dominoIndex, 10));
+      });
+
+      tile.addEventListener('dragend', () => {
+        clearTransitionHighlight();
+      });
+
+      tile.addEventListener('mousedown', () => {
+        highlightTransitionFromDominoIndex(parseInt(tile.dataset.dominoIndex, 10));
+      });
+      tile.addEventListener('mouseup', () => {
+        clearTransitionHighlight();
+      });
+      tile.addEventListener('mouseleave', () => {
+        clearTransitionHighlight();
       });
     }
 
@@ -1217,6 +1359,7 @@
     return res;
   }
 
+
   function transformMPCPtoPCP(mpcpDominoes) {
     if (!mpcpDominoes || mpcpDominoes.length === 0) return [];
 
@@ -1227,35 +1370,52 @@
 
     const PCP = [];
 
+    // Original first MPCP tile
     const first = mpcpDominoes[0];
     const t1 = first.top;
     const b1 = first.bottom;
     const s1 = first.step;
 
+    // Preserve srcQ/srcA (even though step 1 doesn't use highlighting, it's harmless)
+    const firstSrcQ = first.srcQ || null;
+    const firstSrcA = first.srcA || null;
+
+    // First special tile (forcing first tile)
     PCP.push({
       top: starPrefix(t1, starSym),
       bottom: starBoth(b1, starSym),
       info: "PCP (from Step " + s1 + "): forcing first tile (⋆t₁ / ⋆b₁⋆)",
-      step: s1
+      step: s1,
+      srcQ: firstSrcQ,
+      srcA: firstSrcA
     });
 
+    // Second special tile (continuation)
     PCP.push({
       top: starPrefix(t1, starSym),
       bottom: starSuffix(b1, starSym),
       info: "PCP (from Step " + s1 + "): continuation (⋆t₁ / b₁⋆)",
-      step: s1
+      step: s1,
+      srcQ: firstSrcQ,
+      srcA: firstSrcA
     });
 
+    // Remaining tiles: one PCP tile for each MPCP tile i ≥ 2
     for (let i = 1; i < mpcpDominoes.length; i++) {
       const d = mpcpDominoes[i];
+
       PCP.push({
         top: starPrefix(d.top, starSym),
         bottom: starSuffix(d.bottom, starSym),
         info: "PCP (from Step " + d.step + "): tile from MPCP index " + (i + 1),
-        step: d.step
+        step: d.step,
+        // 🔴 IMPORTANT: preserve srcQ/srcA so highlighting works for steps 2 and 3
+        srcQ: d.srcQ || null,
+        srcA: d.srcA || null
       });
     }
 
+    // Closing tile (no associated (q,a), so no srcQ/srcA)
     PCP.push({
       top: [starSym, diamondSym],
       bottom: [diamondSym],
@@ -1266,9 +1426,12 @@
     return PCP;
   }
 
+
   function updateDominoView() {
     const toggle = document.getElementById('toggleMPCP');
     const usePCP = toggle && toggle.checked;
+
+    clearTransitionHighlight();
 
     if (!mpcpDominoes || mpcpDominoes.length === 0) {
       currentDominoes = [];
@@ -1395,6 +1558,26 @@
   setupWorkspaceDnD();
   applyDarkModeFromStorage();
   setupSplitter();
+
+  /* NOW add the footer-year failsafe here: */
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('footer-year');
+    if (!el) return;
+
+    let year = 2025;  // fallback
+
+    try {
+      const d = new Date();
+      const y = d.getFullYear();
+      if (typeof y === "number" && !isNaN(y) && y > 1900 && y < 3000) {
+        year = y;
+      }
+    } catch (e) {
+      // silently fall back to 2025
+    }
+
+    el.textContent = year;
+  });
 
 </script>
 

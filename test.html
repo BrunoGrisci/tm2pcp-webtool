@@ -38,6 +38,62 @@
     }
 
 
+    .tm-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    #tmInfo {
+      flex: 1 1 260px;
+    }
+
+    #tmTable {
+      flex: 1 1 260px;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Transition table styling */
+    .tm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .tm-table th,
+    .tm-table td {
+      border: 1px solid var(--panel-border);
+      padding: 0.2rem 0.35rem;
+      text-align: center;
+    }
+
+    .tm-table thead th {
+      background: var(--panel-bg);
+      position: sticky;
+      top: 0;
+    }
+
+    .tm-state-cell {
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    /* Optional: highlight init/accepting states a bit */
+    .tm-state-cell-init {
+      font-weight: 600;
+    }
+
+    .tm-state-cell-accept {
+      color: #d97706;
+    }
+    body.dark-mode .tm-state-cell-accept {
+      color: #fbbf24;
+    }
+
+
     :root {
       --bg: #ffffff;
       --fg: #222222;
@@ -382,8 +438,12 @@
   </div>
 </div>
 
-<div id="tmInfo"></div>
+<div class="tm-summary">
+  <div id="tmInfo"></div>
+  <div id="tmTable"></div>
+</div>
 <div id="status"></div>
+
 
 <div class="split-container">
   <div id="leftPane" class="panel">
@@ -415,6 +475,14 @@
   let currentTM = null;
   let mpcpDominoes = [];
   let currentDominoes = [];
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
 
   // Set current year in footer
   (function () {
@@ -674,6 +742,7 @@
     const div = document.getElementById('tmInfo');
     if (!tm) {
       div.textContent = "";
+      renderTransitionTable(null);
       return;
     }
 
@@ -700,7 +769,93 @@
     }
 
     div.textContent = text;
+
+    // NEW: render transition table to the right
+    renderTransitionTable(tm);
   }
+
+
+  function renderTransitionTable(tm) {
+    const container = document.getElementById('tmTable');
+    if (!container) return;
+
+    if (!tm) {
+      container.innerHTML = "";
+      return;
+    }
+
+    // Tape symbols = alphabet ∪ {marker, blank}
+    const tapeSymbols = Array.from(new Set([
+      ...tm.alphabet,
+      tm.markerSymbol,
+      tm.blankSymbol
+    ]));
+
+    const initial = tm.initialState;
+    const acceptSet = new Set(tm.acceptStates || []);
+
+    // Order: initial state first, then others, then accepting states at the end
+    const others = tm.states.filter(
+      s => s !== initial && !acceptSet.has(s)
+    );
+    const accepts = tm.states.filter(
+      s => acceptSet.has(s) && s !== initial
+    );
+
+    const rowStates = [];
+    if (initial) rowStates.push(initial);
+    rowStates.push(...others);
+    rowStates.push(...accepts);
+
+    // Map (q,a) -> transition
+    const transMap = new Map();
+    for (const tr of tm.transitions) {
+      if (!tr.q || tr.a == null) continue;
+      const key = tr.q + "||" + tr.a;
+      if (!transMap.has(key)) {
+        transMap.set(key, tr);
+      }
+    }
+
+    let html = '<table class="tm-table"><thead><tr>';
+    html += '<th>q / a</th>';
+    for (const a of tapeSymbols) {
+      html += `<th>${escapeHtml(a)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    for (const q of rowStates) {
+      const isInit = (q === initial);
+      const isAcc  = acceptSet.has(q);
+
+      let label = q;
+      if (isInit && isAcc) label = '→★ ' + q;
+      else if (isInit)     label = '→ '  + q;
+      else if (isAcc)      label = '★ '  + q;
+
+      let stateClass = "tm-state-cell";
+      if (isInit)  stateClass += " tm-state-cell-init";
+      if (isAcc)   stateClass += " tm-state-cell-accept";
+
+      html += `<tr><th class="${stateClass}">${escapeHtml(label)}</th>`;
+
+      for (const a of tapeSymbols) {
+        const key = q + "||" + a;
+        const tr = transMap.get(key);
+        if (tr) {
+          const cell = `${tr.q2},${tr.b},${tr.dir}`;
+          html += `<td>${escapeHtml(cell)}</td>`;
+        } else {
+          html += '<td>–</td>';
+        }
+      }
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+    
 
   function tokensToDisplay(tokens) {
     return tokens.join(" ");

@@ -9,7 +9,7 @@ const I18N = {
 
     // Labels / buttons / toggles
     "label.mt_file": ".mt file:",
-    "label.input_word": "Input word w:",
+    "label.input_word": "Input word:",
     "label.generate_btn": "Generate dominoes",
     "label.mpcp_to_pcp": "MPCP ⇒ PCP",
     "label.dark_mode": "Dark mode",
@@ -73,21 +73,21 @@ const I18N = {
 
   "pt-BR": {
     // Titles / sections
-    "title.main": "Gerador de dominós TM → PCP",
+    "title.main": "Gerador de dominós MT → PCP",
     "title.palette": "Paleta de dominós",
     "title.workspace": "Área de trabalho (sequência de dominós)",
 
     // Labels / buttons / toggles
     "label.mt_file": "Arquivo .mt:",
-    "label.input_word": "Palavra de entrada w:",
+    "label.input_word": "Palavra de entrada:",
     "label.generate_btn": "Gerar dominós",
-    "label.mpcp_to_pcp": "MPCP ⇒ PCP",
+    "label.mpcp_to_pcp": "PCPM ⇒ PCP",
     "label.dark_mode": "Modo escuro",
     "button.clear_workspace": "Limpar área de trabalho",
 
     // Palette / workspace notes
     "note.palette":
-      "Os dominós são agrupados e coloridos por etapa da construção. Quando “MPCP ⇒ PCP” está marcado, você vê a instância de PCP, ainda separada pelas etapas originais.",
+      "Os dominós são agrupados e coloridos por etapa da construção. Quando “PCPM ⇒ PCP” está marcado, você vê a instância de PCP, ainda separada pelas etapas originais.",
     "note.workspace":
       "Arraste os dominós para cá na ordem desejada. Você pode reordenar ou apagar dominós individualmente. As cadeias Topo/Base abaixo são coloridas de acordo com a etapa de cada símbolo.",
 
@@ -108,11 +108,11 @@ const I18N = {
     // Status messages
     "status.tm_parsed_ok": "Máquina de Turing carregada com sucesso.",
     "status.parse_error": "Erro ao interpretar o arquivo .mt: {ERR}",
-    "status.no_mpcp": "Nenhum dominó de MPCP para exibir.",
+    "status.no_mpcp": "Nenhum dominó de PCPM para exibir.",
     "status.need_mt": "Por favor, carregue um arquivo .mt primeiro.",
-    "status.mpcp_shown": "Exibindo {N} dominós da instância de MPCP.",
+    "status.mpcp_shown": "Exibindo {N} dominós da instância de PCPM.",
     "status.pcp_shown":
-      "Exibindo instância de PCP com {K} dominós (derivados de {N} dominós de MPCP).",
+      "Exibindo instância de PCP com {K} dominós (derivados de {N} dominós de PCPM).",
     "status.gen_error": "Erro ao gerar dominós: {ERR}",
 
     // About / header
@@ -128,7 +128,7 @@ const I18N = {
     // Step headers
     "step.header_plain": "Etapa {step}",
     "step.header_pcp": "Etapa {step} (PCP, a partir da Etapa {step} original)",
-    "step.header8": "Etapa 8 (peça de fechamento para MPCP ⇒ PCP)",
+    "step.header8": "Etapa 8 (peça de fechamento para PCPM ⇒ PCP)",
 
     // Concatenated strings
     "concat.top": "Topo:",

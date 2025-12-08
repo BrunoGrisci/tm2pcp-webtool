@@ -13,37 +13,6 @@
   <meta charset="UTF-8">
   <title>TM → PCP Dominoes</title>
   <style>
-
-    .concat-label {
-      display: inline-block;
-      min-width: 5em;      /* enough for "Bottom:" / "Base:" */
-      text-align: right;
-      margin-right: 0.5em; /* small gap before the first symbol */
-    }
-
-    .concat-symbol {
-      display: inline-block;
-      min-width: var(--sym-width, 3ch); /* default, overridden from JS */
-      text-align: center;
-      margin: 0 0.25ch; /* small horizontal spacing between symbols */
-    }
-
-    /* Scrollable region for Top/Bottom */
-    .concat-scroll-area {
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.5rem;
-      white-space: var(--concat-whitespace, pre-wrap);
-      border-bottom: 1px solid transparent; /* keeps visual separation */
-    }
-
-    /* Status is always visible, never scrolls */
-    .concat-status-area {
-      white-space: normal; /* allow wrapping freely */
-      margin-top: 0.5rem;
-    }
-
-
     .app-footer {
       margin-top: 2rem;
       padding-top: 0.75rem;
@@ -379,18 +348,7 @@
       margin-top: 0.75rem;
       font-family: monospace;
       font-size: 0.9rem;
-      overflow-x: auto;      /* allow horizontal scrolling when needed */
-      padding-bottom: 0.75rem;  /* extra space so text is not covered by the scrollbar */
-    }
-
-    /* wrap mode (current behavior) */
-    #concatStrings.wrap-mode {
       white-space: pre-wrap;
-    }
-
-    /* scroll mode: no wrapping, only explicit line breaks */
-    #concatStrings.scroll-mode {
-      white-space: pre;      /* respects \n / <br>, but no automatic wrapping */
     }
 
     .equal {
@@ -593,27 +551,16 @@
     <div class="small-note" data-i18n="note.workspace">
       Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.
     </div>
-
     <div id="workspace"></div>
-
-    <div style="margin-top:0.5rem; display:flex; align-items:center; gap:0.75rem;">
-      <button id="clearWorkspaceBtn" data-i18n="button.clear_workspace">
-        Clear workspace
-      </button>
-
-      <label style="font-weight:400; cursor:pointer;">
-        <input type="checkbox" id="wrapToggle" checked>
-        <span data-i18n="label.wrap_strings">Wrap strings</span>
-      </label>
-    </div>
-
+    <button id="clearWorkspaceBtn" style="margin-top:0.5rem;" data-i18n="button.clear_workspace">
+      Clear workspace
+    </button>
     <div id="concatStrings"></div>
-
   </div>
 </div>
 
 <!-- Load i18n logic -->
-<script src="tm2pcp_i18n.js"></script>
+<script src="i18n.js"></script>
 
 <script>
   let currentTM = null;
@@ -773,22 +720,6 @@
       }
     }
 
-    // Count of raw transition entries (before deduplication)
-    const rawTransitionCount = transitions.length;
-
-    // Deduplicate transitions: many .mt files repeat identical transitions,
-    // which do not change the machine's behavior but would inflate #Transitions.
-    const uniqueMap = new Map();
-    for (const tr of transitions) {
-      if (!tr.q || tr.a == null || !tr.q2 || !tr.b || !tr.dir) continue;
-      const key = `${tr.q}||${tr.a}||${tr.q2}||${tr.b}||${tr.dir}`;
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, tr);
-      }
-    }
-    const uniqueTransitions = Array.from(uniqueMap.values());
-
-
     return {
       inputAlphabet,
       auxAlphabet,
@@ -798,13 +729,9 @@
       states,
       initialState,
       acceptStates,
-      transitions: uniqueTransitions,
-      rawTransitionCount,
-      uniqueTransitionCount: uniqueTransitions.length,
+      transitions,
       comment: commentBlock
     };
-
-
   }
 
   function tokenizeWord(w) {
@@ -940,15 +867,6 @@
       return;
     }
 
-    // Fallbacks in case we ever load a TM without the new fields
-    const distinctCount = tm.uniqueTransitionCount != null
-      ? tm.uniqueTransitionCount
-      : (tm.transitions ? tm.transitions.length : 0);
-
-    const rawCount = tm.rawTransitionCount != null
-      ? tm.rawTransitionCount
-      : distinctCount;
-
     let text =
       t("tm.parsed_title") + "\n" +
       "  " + t("tm.input_alphabet") + " " + tm.inputAlphabet.join(", ") + "\n" +
@@ -965,8 +883,7 @@
         (tm.acceptStates && tm.acceptStates.length
            ? tm.acceptStates.join(", ")
            : "∅") + "\n" +
-      "  " + t("tm.num_transitions_distinct") + " " + distinctCount + "\n" +
-      "  " + t("tm.num_transitions_raw") + " " + rawCount;
+      "  " + t("tm.num_transitions") + " " + tm.transitions.length;
 
     if (tm.comment && tm.comment.trim().length > 0) {
       text += "\n\n" + t("tm.comment_title") + "\n" + tm.comment;
@@ -978,22 +895,13 @@
     clearTransitionHighlight();
   }
 
-
   function renderTransitionTable(tm) {
     const container = document.getElementById('tmTable');
-    const label = document.getElementById('tmTableLabel');
     if (!container) return;
 
     if (!tm) {
       container.innerHTML = "";
-      if (label) {
-        label.style.display = "none";
-      }
       return;
-    }
-
-    if (label) {
-      label.style.display = "block";
     }
 
     const tapeSymbols = Array.from(new Set([
@@ -1037,16 +945,16 @@
       const isInit = (q === initial);
       const isAcc  = acceptSet.has(q);
 
-      let labelState = q;
-      if (isInit && isAcc) labelState = '→★ ' + q;
-      else if (isInit)     labelState = '→ '  + q;
-      else if (isAcc)      labelState = '★ '  + q;
+      let label = q;
+      if (isInit && isAcc) label = '→★ ' + q;
+      else if (isInit)     label = '→ '  + q;
+      else if (isAcc)      label = '★ '  + q;
 
       let stateClass = "tm-state-cell";
       if (isInit)  stateClass += " tm-state-cell-init";
       if (isAcc)   stateClass += " tm-state-cell-accept";
 
-      html += `<tr data-state="${escapeHtml(q)}"><th class="${stateClass}">${escapeHtml(labelState)}</th>`;
+      html += `<tr data-state="${escapeHtml(q)}"><th class="${stateClass}">${escapeHtml(label)}</th>`;
 
       for (const a of tapeSymbols) {
         const key = q + "||" + a;
@@ -1065,7 +973,6 @@
     html += '</tbody></table>';
     container.innerHTML = html;
   }
-
 
   function tokensToDisplay(tokens) {
     return tokens.join(" ");
@@ -1234,57 +1141,33 @@
 
     const concatDiv = document.getElementById('concatStrings');
     if (children.length === 0) {
-      concatDiv.innerHTML = "";
+      concatDiv.textContent = "";
       return;
     }
 
-    // Determine max symbol width
-    const allSeq = topSeq.concat(bottomSeq);
-    const maxLen = allSeq.reduce(
-      (m, t) => Math.max(m, String(t.sym).length),
-      1
-    );
-    const symbolWidth = (maxLen + 1) + 'ch';
-    concatDiv.style.setProperty('--sym-width', symbolWidth);
-
     function seqToHTML(seq) {
       return seq.map(t => {
-        const cls = `concat-symbol step-text-${t.step}`;
+        const cls = `step-text-${t.step}`;
         const safeSym = String(t.sym)
           .replace(/&/g, "&amp;")
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;");
         return `<span class="${cls}">${safeSym}</span>`;
-      }).join("");
+      }).join(" ");
     }
 
     const topHTML = seqToHTML(topSeq);
     const bottomHTML = seqToHTML(bottomSeq);
 
-    const equal =
-      topSeq.map(t => t.sym).join("|") ===
-      bottomSeq.map(t => t.sym).join("|");
+    const equal = topSeq.map(t => t.sym).join("|") === bottomSeq.map(t => t.sym).join("|");
 
-    const labelTop = `<span class="concat-label">${t("concat.top")}</span>`;
-    const labelBottom = `<span class="concat-label">${t("concat.bottom")}</span>`;
-
-    // NEW: Split into scrollable + fixed status block
-    concatDiv.innerHTML = `
-      <div class="concat-scroll-area">
-        ${labelTop}${topHTML}<br>
-        ${labelBottom}${bottomHTML}
-      </div>
-      <div class="concat-status-area">
-        ${
-          equal
-            ? `<span class="equal">${t("concat.equal")}</span>`
-            : `<span class="not-equal">${t("concat.diff")}</span>`
-        }
-      </div>
-    `;
+    concatDiv.innerHTML =
+      `${t("concat.top")} ${topHTML}<br>` +
+      `${t("concat.bottom")} ${bottomHTML}<br><br>` +
+      (equal
+        ? `<span class='equal'>${t("concat.equal")}</span>`
+        : `<span class='not-equal'>${t("concat.diff")}</span>`);
   }
-
-
 
   function setupWorkspaceDnD() {
     const workspace = document.getElementById('workspace');
@@ -1621,103 +1504,32 @@
       const btn = ev.target.closest(".lang-btn");
       if (!btn) return;
       const lang = btn.getAttribute("data-lang");
-
-      // 1) Switch language (updates all data-i18n elements)
       setLanguage(lang);
-
-      // 2) Re-render parsed TM info (uses t(...))
       renderTMInfo(currentTM);
-
-      // 3) Re-render ONLY the palette headers and Top/Bottom text,
-      //    without touching the current sequence in the workspace.
-      if (currentDominoes && currentDominoes.length > 0) {
-        // Palette headers (Step / Etapa) depend on language and MPCP ⇒ PCP toggle
-        renderDominoPalette(currentDominoes);
-        // Top / Bottom / equality message depend on language
-        concatWorkspaceStrings();
-      }
     });
   }
-
-
 
   setupWorkspaceDnD();
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
 
-  // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
-  const concatDiv = document.getElementById('concatStrings');
-  const wrapToggle = document.getElementById('wrapToggle');
-
-  // default preference = wrap
-  let wrapPref = true;
-  try {
-    const saved = localStorage.getItem('tm2pcp-wrap-mode');
-    if (saved === 'scroll') {
-      wrapPref = false;
-    } else if (saved === 'wrap') {
-      wrapPref = true;
-    }
-  } catch (e) {
-    // if localStorage fails, keep default
-  }
-
-  if (concatDiv) {
-    if (wrapPref) {
-      concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
-    } else {
-      concatDiv.style.setProperty('--concat-whitespace', 'pre');
-    }
-  }
-
-  if (wrapToggle && concatDiv) {
-    // Ensure checkbox matches the actual behavior
-    wrapToggle.checked = wrapPref;
-
-    wrapToggle.addEventListener('change', (e) => {
-      const wrap = e.target.checked;
-      if (wrap) {
-          concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
-
-        try {
-          localStorage.setItem('tm2pcp-wrap-mode', 'wrap');
-        } catch (err) {}
-      } else {
-          concatDiv.style.setProperty('--concat-whitespace', 'pre');
-
-        try {
-          localStorage.setItem('tm2pcp-wrap-mode', 'scroll');
-        } catch (err) {}
-      }
-    });
-  }
-
-
-
   document.addEventListener('DOMContentLoaded', () => {
-    // Footer year (with failsafe)
     const el = document.getElementById('footer-year');
-    if (el) {
-      let year = 2025;
-      try {
-        const d = new Date();
-        const y = d.getFullYear();
-        if (typeof y === "number" && !isNaN(y) && y > 1900 && y < 3000) {
-          year = y;
-        }
-      } catch (e) {}
-      el.textContent = year;
-    }
+    if (!el) return;
 
-    // Hide transition table label until a TM is loaded
-    const lbl = document.getElementById('tmTableLabel');
-    if (lbl) {
-      lbl.style.display = "none";
-    }
+    let year = 2025;
+
+    try {
+      const d = new Date();
+      const y = d.getFullYear();
+      if (typeof y === "number" && !isNaN(y) && y > 1900 && y < 3000) {
+        year = y;
+      }
+    } catch (e) {}
+
+    el.textContent = year;
   });
-
-
 </script>
 
 <footer class="app-footer">

@@ -1,4 +1,4 @@
-// i18n.js – bilingual support (English / Portuguese-BR)
+// tm2pcp_i18n.js – bilingual support (English / Portuguese-BR)
 
 const I18N = {
   "en": {
@@ -22,7 +22,7 @@ const I18N = {
       "Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.",
 
     // TM table
-    "tm.table_label": "Transition Table (δ)",
+    "tm.table_label": "Transition Table",
     "tm.parsed_title": "Parsed Turing Machine:",
     "tm.input_alphabet": "Input alphabet (Σ):",
     "tm.aux_alphabet": "Auxiliary alphabet (Γ \\ Σ):",
@@ -92,7 +92,7 @@ const I18N = {
       "Arraste os dominós para cá na ordem desejada. Você pode reordenar ou apagar dominós individualmente. As cadeias Topo/Base abaixo são coloridas de acordo com a etapa de cada símbolo.",
 
     // TM table
-    "tm.table_label": "Tabela de Transição (δ)",
+    "tm.table_label": "Tabela de Transição",
     "tm.parsed_title": "Máquina de Turing interpretada:",
     "tm.input_alphabet": "Alfabeto de entrada (Σ):",
     "tm.aux_alphabet": "Alfabeto auxiliar (Γ \\ Σ):",

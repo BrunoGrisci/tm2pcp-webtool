@@ -28,6 +28,21 @@
       margin: 0 0.25ch; /* small horizontal spacing between symbols */
     }
 
+    /* Scrollable region for Top/Bottom */
+    .concat-scroll-area {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+      white-space: var(--concat-whitespace, pre-wrap);
+      border-bottom: 1px solid transparent; /* keeps visual separation */
+    }
+
+    /* Status is always visible, never scrolls */
+    .concat-status-area {
+      white-space: normal; /* allow wrapping freely */
+      margin-top: 0.5rem;
+    }
+
 
     .app-footer {
       margin-top: 2rem;
@@ -364,7 +379,18 @@
       margin-top: 0.75rem;
       font-family: monospace;
       font-size: 0.9rem;
+      overflow-x: auto;      /* allow horizontal scrolling when needed */
+      padding-bottom: 0.75rem;  /* extra space so text is not covered by the scrollbar */
+    }
+
+    /* wrap mode (current behavior) */
+    #concatStrings.wrap-mode {
       white-space: pre-wrap;
+    }
+
+    /* scroll mode: no wrapping, only explicit line breaks */
+    #concatStrings.scroll-mode {
+      white-space: pre;      /* respects \n / <br>, but no automatic wrapping */
     }
 
     .equal {
@@ -567,11 +593,22 @@
     <div class="small-note" data-i18n="note.workspace">
       Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.
     </div>
+
     <div id="workspace"></div>
-    <button id="clearWorkspaceBtn" style="margin-top:0.5rem;" data-i18n="button.clear_workspace">
-      Clear workspace
-    </button>
+
+    <div style="margin-top:0.5rem; display:flex; align-items:center; gap:0.75rem;">
+      <button id="clearWorkspaceBtn" data-i18n="button.clear_workspace">
+        Clear workspace
+      </button>
+
+      <label style="font-weight:400; cursor:pointer;">
+        <input type="checkbox" id="wrapToggle" checked>
+        <span data-i18n="label.wrap_strings">Wrap strings</span>
+      </label>
+    </div>
+
     <div id="concatStrings"></div>
+
   </div>
 </div>
 
@@ -1166,17 +1203,17 @@
 
     const concatDiv = document.getElementById('concatStrings');
     if (children.length === 0) {
-      concatDiv.textContent = "";
+      concatDiv.innerHTML = "";
       return;
     }
 
-    // --- NEW: compute a common symbol width based on the longest symbol ---
+    // Determine max symbol width
     const allSeq = topSeq.concat(bottomSeq);
     const maxLen = allSeq.reduce(
       (m, t) => Math.max(m, String(t.sym).length),
       1
     );
-    const symbolWidth = (maxLen + 1) + 'ch'; // +1ch for padding
+    const symbolWidth = (maxLen + 1) + 'ch';
     concatDiv.style.setProperty('--sym-width', symbolWidth);
 
     function seqToHTML(seq) {
@@ -1200,13 +1237,22 @@
     const labelTop = `<span class="concat-label">${t("concat.top")}</span>`;
     const labelBottom = `<span class="concat-label">${t("concat.bottom")}</span>`;
 
-    concatDiv.innerHTML =
-      `${labelTop}${topHTML}<br>` +
-      `${labelBottom}${bottomHTML}<br><br>` +
-      (equal
-        ? `<span class='equal'>${t("concat.equal")}</span>`
-        : `<span class='not-equal'>${t("concat.diff")}</span>`);
+    // NEW: Split into scrollable + fixed status block
+    concatDiv.innerHTML = `
+      <div class="concat-scroll-area">
+        ${labelTop}${topHTML}<br>
+        ${labelBottom}${bottomHTML}
+      </div>
+      <div class="concat-status-area">
+        ${
+          equal
+            ? `<span class="equal">${t("concat.equal")}</span>`
+            : `<span class="not-equal">${t("concat.diff")}</span>`
+        }
+      </div>
+    `;
   }
+
 
 
   function setupWorkspaceDnD() {
@@ -1568,6 +1614,55 @@
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
+
+  // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
+  const concatDiv = document.getElementById('concatStrings');
+  const wrapToggle = document.getElementById('wrapToggle');
+
+  // default preference = wrap
+  let wrapPref = true;
+  try {
+    const saved = localStorage.getItem('tm2pcp-wrap-mode');
+    if (saved === 'scroll') {
+      wrapPref = false;
+    } else if (saved === 'wrap') {
+      wrapPref = true;
+    }
+  } catch (e) {
+    // if localStorage fails, keep default
+  }
+
+  if (concatDiv) {
+    if (wrapPref) {
+      concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
+    } else {
+      concatDiv.style.setProperty('--concat-whitespace', 'pre');
+    }
+  }
+
+  if (wrapToggle && concatDiv) {
+    // Ensure checkbox matches the actual behavior
+    wrapToggle.checked = wrapPref;
+
+    wrapToggle.addEventListener('change', (e) => {
+      const wrap = e.target.checked;
+      if (wrap) {
+          concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
+
+        try {
+          localStorage.setItem('tm2pcp-wrap-mode', 'wrap');
+        } catch (err) {}
+      } else {
+          concatDiv.style.setProperty('--concat-whitespace', 'pre');
+
+        try {
+          localStorage.setItem('tm2pcp-wrap-mode', 'scroll');
+        } catch (err) {}
+      }
+    });
+  }
+
+
 
   document.addEventListener('DOMContentLoaded', () => {
     // Footer year (with failsafe)

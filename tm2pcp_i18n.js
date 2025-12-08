@@ -14,6 +14,7 @@ const I18N = {
     "label.mpcp_to_pcp": "MPCP ⇒ PCP",
     "label.dark_mode": "Dark mode",
     "button.clear_workspace": "Clear workspace",
+    "label.wrap_strings": "Wrap concatenated strings",
 
     // Palette / workspace notes
     "note.palette":
@@ -84,6 +85,8 @@ const I18N = {
     "label.mpcp_to_pcp": "PCPM ⇒ PCP",
     "label.dark_mode": "Modo escuro",
     "button.clear_workspace": "Limpar área de trabalho",
+    "label.wrap_strings": "Quebrar linhas das cadeias",
+
 
     // Palette / workspace notes
     "note.palette":

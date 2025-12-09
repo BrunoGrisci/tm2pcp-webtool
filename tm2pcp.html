@@ -1122,6 +1122,7 @@
         el.appendChild(top);
         el.appendChild(bottom);
 
+        // Drag from palette
         el.addEventListener('dragstart', (ev) => {
           ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
           highlightTransitionFromDominoIndex(i);
@@ -1131,6 +1132,7 @@
           clearTransitionHighlight();
         });
 
+        // Highlight on click/hover
         el.addEventListener('mousedown', () => {
           highlightTransitionFromDominoIndex(i);
         });
@@ -1141,6 +1143,15 @@
           clearTransitionHighlight();
         });
 
+        // NEW: double-click from palette → append to end of workspace
+        el.addEventListener('dblclick', () => {
+          const workspace = document.getElementById('workspace');
+          if (!workspace) return;
+          const newTile = createWorkspaceTile(i);
+          workspace.appendChild(newTile);
+          concatWorkspaceStrings();
+        });
+
         list.appendChild(el);
       }
 
@@ -1148,6 +1159,7 @@
       palette.appendChild(group);
     });
   }
+
 
   function createWorkspaceTile(idx, fixed = false) {
     const workspace = document.getElementById('workspace');

@@ -1506,7 +1506,7 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey("status.no_mpcp");
+      showStatus(t("status.no_mpcp"));
       return;
     }
 
@@ -1515,12 +1515,15 @@
     if (usePCP) {
       currentDominoes = transformMPCPtoPCP(mpcpDominoes);
       const K = currentDominoes.length;
-      setStatusFromKey("status.pcp_shown", { K, N });
+      showStatus(
+        t("status.pcp_shown", { K, N })
+      );
     } else {
       currentDominoes = mpcpDominoes.slice();
-      setStatusFromKey("status.mpcp_shown", { N });
+      showStatus(
+        t("status.mpcp_shown", { N })
+      );
     }
-
 
     renderDominoPalette(currentDominoes);
 
@@ -1548,38 +1551,37 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey(null); // clear status and its key
+      showStatus("");
       return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
-    try {
-      currentTM = parseMt(e.target.result);
-      renderTMInfo(currentTM);
-      setStatusFromKey("status.tm_parsed_ok");
-    } catch (err) {
-      console.error(err);
-      setStatusFromKey("status.parse_error", { ERR: err.message }, true);
-      currentTM = null;
-      renderTMInfo(null);
-    }
+      try {
+        currentTM = parseMt(e.target.result);
+        renderTMInfo(currentTM);
+        showStatus(t("status.tm_parsed_ok"));
+      } catch (err) {
+        console.error(err);
+        showStatus(t("status.parse_error", { ERR: err.message }), true);
+        currentTM = null;
+        renderTMInfo(null);
+      }
     };
     reader.readAsText(file);
   });
 
   document.getElementById('generateBtn').addEventListener('click', () => {
     if (!currentTM) {
-      setStatusFromKey("status.need_mt", {}, true);
+      showStatus(t("status.need_mt"), true);
       return;
     }
     const w = document.getElementById('inputWord').value || "";
     try {
       mpcpDominoes = buildDominoes(currentTM, w);
-      updateDominoView(); // this will call setStatusFromKey for MPCP/PCP status
+      updateDominoView();
     } catch (err) {
       console.error(err);
-      setStatusFromKey("status.gen_error", { ERR: err.message }, true);
+      showStatus(t("status.gen_error", { ERR: err.message }), true);
     }
   });
 

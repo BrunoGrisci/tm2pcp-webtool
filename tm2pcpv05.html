@@ -12,7 +12,6 @@
 
   <meta charset="UTF-8">
   <title>TM → PCP Dominoes</title>
-  <link rel="icon" href="domino.png">
   <style>
 
     .concat-label {
@@ -774,22 +773,6 @@
       }
     }
 
-    // Count of raw transition entries (before deduplication)
-    const rawTransitionCount = transitions.length;
-
-    // Deduplicate transitions: many .mt files repeat identical transitions,
-    // which do not change the machine's behavior but would inflate #Transitions.
-    const uniqueMap = new Map();
-    for (const tr of transitions) {
-      if (!tr.q || tr.a == null || !tr.q2 || !tr.b || !tr.dir) continue;
-      const key = `${tr.q}||${tr.a}||${tr.q2}||${tr.b}||${tr.dir}`;
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, tr);
-      }
-    }
-    const uniqueTransitions = Array.from(uniqueMap.values());
-
-
     return {
       inputAlphabet,
       auxAlphabet,
@@ -799,13 +782,9 @@
       states,
       initialState,
       acceptStates,
-      transitions: uniqueTransitions,
-      rawTransitionCount,
-      uniqueTransitionCount: uniqueTransitions.length,
+      transitions,
       comment: commentBlock
     };
-
-
   }
 
   function tokenizeWord(w) {
@@ -941,15 +920,6 @@
       return;
     }
 
-    // Fallbacks in case we ever load a TM without the new fields
-    const distinctCount = tm.uniqueTransitionCount != null
-      ? tm.uniqueTransitionCount
-      : (tm.transitions ? tm.transitions.length : 0);
-
-    const rawCount = tm.rawTransitionCount != null
-      ? tm.rawTransitionCount
-      : distinctCount;
-
     let text =
       t("tm.parsed_title") + "\n" +
       "  " + t("tm.input_alphabet") + " " + tm.inputAlphabet.join(", ") + "\n" +
@@ -966,8 +936,7 @@
         (tm.acceptStates && tm.acceptStates.length
            ? tm.acceptStates.join(", ")
            : "∅") + "\n" +
-      "  " + t("tm.num_transitions_distinct") + " " + distinctCount + "\n" +
-      "  " + t("tm.num_transitions_raw") + " " + rawCount;
+      "  " + t("tm.num_transitions") + " " + tm.transitions.length;
 
     if (tm.comment && tm.comment.trim().length > 0) {
       text += "\n\n" + t("tm.comment_title") + "\n" + tm.comment;
@@ -978,7 +947,6 @@
     renderTransitionTable(tm);
     clearTransitionHighlight();
   }
-
 
   function renderTransitionTable(tm) {
     const container = document.getElementById('tmTable');
@@ -997,18 +965,11 @@
       label.style.display = "block";
     }
 
-    // Build column order: marker first, blank last, everything else in-between
-    const marker = tm.markerSymbol;
-    const blank = tm.blankSymbol;
-
-    const middle = tm.alphabet.filter(sym => sym !== marker && sym !== blank);
-
-    const tapeSymbols = [
-      marker,
-      ...middle,
-      blank
-    ];
-
+    const tapeSymbols = Array.from(new Set([
+      ...tm.alphabet,
+      tm.markerSymbol,
+      tm.blankSymbol
+    ]));
 
     const initial = tm.initialState;
     const acceptSet = new Set(tm.acceptStates || []);
@@ -1130,7 +1091,6 @@
         el.appendChild(top);
         el.appendChild(bottom);
 
-        // Drag from palette
         el.addEventListener('dragstart', (ev) => {
           ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
           highlightTransitionFromDominoIndex(i);
@@ -1140,7 +1100,6 @@
           clearTransitionHighlight();
         });
 
-        // Highlight on click/hover
         el.addEventListener('mousedown', () => {
           highlightTransitionFromDominoIndex(i);
         });
@@ -1151,15 +1110,6 @@
           clearTransitionHighlight();
         });
 
-        // NEW: double-click from palette → append to end of workspace
-        el.addEventListener('dblclick', () => {
-          const workspace = document.getElementById('workspace');
-          if (!workspace) return;
-          const newTile = createWorkspaceTile(i);
-          workspace.appendChild(newTile);
-          concatWorkspaceStrings();
-        });
-
         list.appendChild(el);
       }
 
@@ -1167,7 +1117,6 @@
       palette.appendChild(group);
     });
   }
-
 
   function createWorkspaceTile(idx, fixed = false) {
     const workspace = document.getElementById('workspace');
@@ -1526,7 +1475,7 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey("status.no_mpcp");
+      showStatus(t("status.no_mpcp"));
       return;
     }
 
@@ -1535,12 +1484,15 @@
     if (usePCP) {
       currentDominoes = transformMPCPtoPCP(mpcpDominoes);
       const K = currentDominoes.length;
-      setStatusFromKey("status.pcp_shown", { K, N });
+      showStatus(
+        t("status.pcp_shown", { K, N })
+      );
     } else {
       currentDominoes = mpcpDominoes.slice();
-      setStatusFromKey("status.mpcp_shown", { N });
+      showStatus(
+        t("status.mpcp_shown", { N })
+      );
     }
-
 
     renderDominoPalette(currentDominoes);
 
@@ -1568,38 +1520,37 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey(null); // clear status and its key
+      showStatus("");
       return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
-    try {
-      currentTM = parseMt(e.target.result);
-      renderTMInfo(currentTM);
-      setStatusFromKey("status.tm_parsed_ok");
-    } catch (err) {
-      console.error(err);
-      setStatusFromKey("status.parse_error", { ERR: err.message }, true);
-      currentTM = null;
-      renderTMInfo(null);
-    }
+      try {
+        currentTM = parseMt(e.target.result);
+        renderTMInfo(currentTM);
+        showStatus(t("status.tm_parsed_ok"));
+      } catch (err) {
+        console.error(err);
+        showStatus(t("status.parse_error", { ERR: err.message }), true);
+        currentTM = null;
+        renderTMInfo(null);
+      }
     };
     reader.readAsText(file);
   });
 
   document.getElementById('generateBtn').addEventListener('click', () => {
     if (!currentTM) {
-      setStatusFromKey("status.need_mt", {}, true);
+      showStatus(t("status.need_mt"), true);
       return;
     }
     const w = document.getElementById('inputWord').value || "";
     try {
       mpcpDominoes = buildDominoes(currentTM, w);
-      updateDominoView(); // this will call setStatusFromKey for MPCP/PCP status
+      updateDominoView();
     } catch (err) {
       console.error(err);
-      setStatusFromKey("status.gen_error", { ERR: err.message }, true);
+      showStatus(t("status.gen_error", { ERR: err.message }), true);
     }
   });
 
@@ -1746,7 +1697,6 @@
       — Departamento de Informática Teórica,
       <a href="https://www.inf.ufrgs.br/site/" target="_blank">Instituto de Informática</a>,
       <a href="https://www.ufrgs.br/site/" target="_blank">UFRGS</a>.
-      <a href="https://www.flaticon.com/br/icones-gratis/pontos" target="_blank" title="pontos ícones">Pontos ícones criados por rizal2109 - Flaticon</a>
     </div>
     <div>
       <span data-i18n="footer.code_label">Code on GitHub:</span>

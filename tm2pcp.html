@@ -554,8 +554,13 @@
     <label for="inputWord"><span data-i18n="label.input_word">Input word w:</span> </label>
     <input type="text" id="inputWord" placeholder="e.g., ()">
   </div>
-  <div>
+  <div style="display:flex; gap:0.5rem; align-items:center;">
     <button id="generateBtn" data-i18n="label.generate_btn">Generate dominoes</button>
+
+    <!-- NEW -->
+    <button id="exportCsvBtn" data-i18n="button.export_csv" title="">
+      Export CSV
+    </button>
   </div>
   <div style="display:flex; align-items:center; gap:0.6rem; margin-left:auto;">
     <label style="font-weight:400; cursor:pointer;">
@@ -1207,6 +1212,36 @@
     return tokens.join(" ");
   }
 
+  function csvEscape(value) {
+    const s = String(value ?? "");
+    // Escape quotes and wrap if needed
+    if (/[",\n\r]/.test(s)) {
+      return `"${s.replace(/"/g, '""')}"`;
+    }
+    return s;
+  }
+
+  function dominoTokensToCsvString(tokens) {
+    // Use the same representation as the UI (space-separated symbols)
+    // This avoids ambiguity when symbols have multiple characters.
+    return (tokens || []).join(" ");
+  }
+
+  function downloadTextFile(filename, content, mime = "text/csv;charset=utf-8") {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  }
+
+
   function renderDominoPalette(dominos) {
     const palette = document.getElementById('dominoPalette');
     palette.innerHTML = "";
@@ -1509,6 +1544,12 @@
     });
   }
 
+  function refreshTooltips() {
+    const exportBtn = document.getElementById("exportCsvBtn");
+    if (exportBtn) exportBtn.title = t("tooltip.export_csv");
+  }
+
+
   function setupSplitter() {
     const container = document.querySelector('.split-container');
     const leftPane = document.getElementById('leftPane');
@@ -1768,6 +1809,29 @@
   });
 
 
+  document.getElementById('exportCsvBtn').addEventListener('click', () => {
+    // Export the currently displayed set (MPCP or PCP depending on toggle)
+    if (!currentDominoes || currentDominoes.length === 0) {
+      setStatusFromKey("status.export_none", {}, true);
+      return;
+    }
+
+    const usePCP = document.getElementById('toggleMPCP')?.checked;
+    const filename = usePCP ? "pcp_dominoes.csv" : "mpcp_dominoes.csv";
+
+    let csv = "domino_id,top_string,bottom_string\n";
+    for (let i = 0; i < currentDominoes.length; i++) {
+      const d = currentDominoes[i];
+      const topStr = dominoTokensToCsvString(d.top);
+      const bottomStr = dominoTokensToCsvString(d.bottom);
+      csv += `${i+1},${csvEscape(topStr)},${csvEscape(bottomStr)}\n`;
+    }
+
+    downloadTextFile(filename, csv);
+    setStatusFromKey("status.export_ok", { N: currentDominoes.length, FILE: filename }, false);
+  });
+
+
   document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
     const workspace = document.getElementById('workspace');
     const usePCP = document.getElementById('toggleMPCP')?.checked;
@@ -1807,6 +1871,7 @@
 
       // 1) Switch language (updates all data-i18n elements)
       setLanguage(lang);
+      refreshTooltips();
 
       // 2) Re-render parsed TM info (uses t(...))
       renderTMInfo(currentTM);
@@ -1828,6 +1893,8 @@
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
+  refreshTooltips();
+
 
   // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
   const concatDiv = document.getElementById('concatStrings');

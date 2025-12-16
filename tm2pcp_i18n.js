@@ -11,6 +11,11 @@ const I18N = {
     "label.mt_file": ".mt file:",
     "label.input_word": "Input word:",
     "label.generate_btn": "Generate dominoes",
+    "button.export_csv": "Export CSV",
+    "tooltip.export_csv": "Export the currently displayed domino set as a CSV file.",
+    "status.export_none": "Nothing to export: generate dominoes first.",
+    "status.export_ok": "Exported {N} dominoes to {FILE}.",
+
     "label.mpcp_to_pcp": "MPCP ⇒ PCP",
     "label.dark_mode": "Dark mode",
     "button.clear_workspace": "Clear workspace",
@@ -85,6 +90,11 @@ const I18N = {
     "label.mt_file": "Arquivo .mt:",
     "label.input_word": "Palavra de entrada:",
     "label.generate_btn": "Gerar dominós",
+    "button.export_csv": "Exportar CSV",
+    "tooltip.export_csv": "Exporta o conjunto de dominós atualmente exibido para um arquivo CSV.",
+    "status.export_none": "Nada para exportar: gere os dominós primeiro.",
+    "status.export_ok": "Exportados {N} dominós para {FILE}.",
+
     "label.mpcp_to_pcp": "PCPM ⇒ PCP",
     "label.dark_mode": "Modo escuro",
     "button.clear_workspace": "Limpar área de trabalho",

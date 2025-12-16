@@ -12,7 +12,6 @@
 
   <meta charset="UTF-8">
   <title>TM → PCP Dominoes</title>
-  <link rel="icon" href="domino.png">
   <style>
 
     .concat-label {
@@ -27,21 +26,6 @@
       min-width: var(--sym-width, 3ch); /* default, overridden from JS */
       text-align: center;
       margin: 0 0.25ch; /* small horizontal spacing between symbols */
-    }
-
-    /* Scrollable region for Top/Bottom */
-    .concat-scroll-area {
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.5rem;
-      white-space: var(--concat-whitespace, pre-wrap);
-      border-bottom: 1px solid transparent; /* keeps visual separation */
-    }
-
-    /* Status is always visible, never scrolls */
-    .concat-status-area {
-      white-space: normal; /* allow wrapping freely */
-      margin-top: 0.5rem;
     }
 
 
@@ -234,13 +218,16 @@
       border-radius: 0.25rem;
     }
 
-    /* Input word validation feedback */
-    input[type="text"].invalid-input {
+    /* Validation feedback for input word */
+    #inputWord.input-invalid {
       border-color: #dc2626;
       outline: 2px solid #dc2626;
       outline-offset: 1px;
     }
-
+    body.dark-mode #inputWord.input-invalid {
+      border-color: #fca5a5;
+      outline-color: #fca5a5;
+    }
 
     input[type="file"] {
       color: var(--fg);
@@ -389,7 +376,6 @@
       font-family: monospace;
       font-size: 0.9rem;
       overflow-x: auto;      /* allow horizontal scrolling when needed */
-      padding-bottom: 0.75rem;  /* extra space so text is not covered by the scrollbar */
     }
 
     /* wrap mode (current behavior) */
@@ -512,8 +498,8 @@
 <h1 data-i18n="title.main">TM → PCP Domino Generator</h1>
 
 <div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
-  <strong data-i18n="about.developed_by_label">Developed by: :</strong>
-  <br>
+  <strong data-i18n="about.developed_by_label">Developed by:</strong>
+  Prof. Bruno Iochins Grisci<br>
   <em data-i18n="about.built_with">
     (Webtool built using Generative AI — ChatGPT 5.1)
   </em><br>
@@ -579,7 +565,7 @@
   <div id="tmInfo"></div>
 
   <div id="tmTableContainer">
-    <div id="tmTableLabel" data-i18n="tm.table_label" style="display:none;">Transition Table</div>
+    <div id="tmTableLabel" data-i18n="tm.table_label">Transition Table (δ)</div>
     <div id="tmTable"></div>
   </div>
 </div>
@@ -625,26 +611,9 @@
 <script src="tm2pcp_i18n.js"></script>
 
 <script>
-  // Debug: if this triggers, the i18n file did not load
-  if (typeof initLanguageFromStorage !== "function") {
-    console.error("i18n failed to load: initLanguageFromStorage is not defined. Check tm2pcp_i18n.js path or run a local server.");
-  }
-</script>
-
-
-<script>
   let currentTM = null;
   let mpcpDominoes = [];
   let currentDominoes = [];
-
-  // ---- Diagnostics: confirm i18n file loaded correctly ----
-  console.log("[tm2pcp] i18n loaded?", {
-    hasT: (typeof window.t === "function"),
-    hasSetLanguage: (typeof window.setLanguage === "function"),
-    hasInitLang: (typeof window.initLanguageFromStorage === "function"),
-    hasSetStatusFromKey: (typeof window.setStatusFromKey === "function")
-  });
-
 
   function escapeHtml(str) {
     return String(str)
@@ -736,36 +705,6 @@
     }
   }
 
-  // ---- Fallbacks if i18n script failed to load ----
-  if (typeof window.t !== "function") {
-    window.t = (key, params = {}) => {
-      // Minimal interpolation fallback: replaces {KEY} tokens if present
-      return String(key).replace(/\{(\w+)\}/g, (_, k) =>
-        params[k] != null ? String(params[k]) : `{${k}}`
-      );
-    };
-  }
-
-  if (typeof window.setStatusFromKey !== "function") {
-    window.setStatusFromKey = (key, params = {}, isError = false) => {
-      if (!key) return showStatus("", false);
-      showStatus(window.t(key, params), isError);
-    };
-  }
-
-  if (typeof window.setLanguage !== "function") {
-    window.setLanguage = (_lang) => {
-      // no-op fallback
-    };
-  }
-
-  if (typeof window.initLanguageFromStorage !== "function") {
-    window.initLanguageFromStorage = () => {
-      // no-op fallback
-    };
-  }
-
-
   function parseMt(content) {
     const rawLines = content.split(/\r?\n/);
 
@@ -829,22 +768,6 @@
       }
     }
 
-    // Count of raw transition entries (before deduplication)
-    const rawTransitionCount = transitions.length;
-
-    // Deduplicate transitions: many .mt files repeat identical transitions,
-    // which do not change the machine's behavior but would inflate #Transitions.
-    const uniqueMap = new Map();
-    for (const tr of transitions) {
-      if (!tr.q || tr.a == null || !tr.q2 || !tr.b || !tr.dir) continue;
-      const key = `${tr.q}||${tr.a}||${tr.q2}||${tr.b}||${tr.dir}`;
-      if (!uniqueMap.has(key)) {
-        uniqueMap.set(key, tr);
-      }
-    }
-    const uniqueTransitions = Array.from(uniqueMap.values());
-
-
     return {
       inputAlphabet,
       auxAlphabet,
@@ -854,91 +777,46 @@
       states,
       initialState,
       acceptStates,
-      transitions: uniqueTransitions,
-      rawTransitionCount,
-      uniqueTransitionCount: uniqueTransitions.length,
+      transitions,
       comment: commentBlock
     };
-
-
   }
 
   function tokenizeWord(w) {
     return w.split("").filter(ch => ch !== " ");
   }
 
-  // Tokenize input word using TM input alphabet.
-  // - Accepts empty word (returns [])
-  // - Supports multi-character symbols via greedy longest-match
-  // - Ignores spaces for convenience (same behavior as tokenizeWord)
-  function tokenizeInputWordByAlphabet(tm, w) {
-    const raw = (w || "").replace(/\s+/g, ""); // remove all whitespace
-    if (raw.length === 0) return [];
-
-    const alphabet = (tm && tm.inputAlphabet) ? tm.inputAlphabet.slice() : [];
-    if (alphabet.length === 0) {
-      // If TM has empty input alphabet, only empty word is valid.
-      // Non-empty raw becomes tokens that will fail validation later.
-      return raw.split("");
-    }
-
-    const hasMultiChar = alphabet.some(sym => String(sym).length > 1);
-
-    // Fast path: single-character alphabet
-    if (!hasMultiChar) {
-      return raw.split("");
-    }
-
-    // Greedy longest-match tokenization for multi-character symbols
-    const syms = alphabet
-      .map(s => String(s))
-      .sort((a, b) => b.length - a.length);
-
-    const tokens = [];
-    let i = 0;
-    while (i < raw.length) {
-      let matched = null;
-
-      for (const s of syms) {
-        if (s.length === 0) continue;
-        if (raw.startsWith(s, i)) {
-          matched = s;
-          break;
-        }
-      }
-
-      if (!matched) {
-        // Fallback: treat current character as a token (will fail validation)
-        tokens.push(raw[i]);
-        i += 1;
-      } else {
-        tokens.push(matched);
-        i += matched.length;
-      }
-    }
-    return tokens;
-  }
-
-  // Validate input word tokens against tm.inputAlphabet.
-  // Returns { ok: true, tokens } or { ok: false, badToken, badIndex, tokens }
-  function validateInputWord(tm, w) {
-    const tokens = tokenizeInputWordByAlphabet(tm, w);
-    const allowed = new Set((tm && tm.inputAlphabet) ? tm.inputAlphabet.map(String) : []);
-
-    // Empty word is always valid (even if alphabet is empty)
+  // Validate the input word against the TM input alphabet (Σ).
+  // Important: we keep the same tokenization used by buildDominoes (character-wise, ignoring spaces).
+  // Empty word (ε) is always valid.
+  function validateInputWord(tm, rawWord) {
+    const tokens = tokenizeWord(rawWord || "");
     if (tokens.length === 0) {
       return { ok: true, tokens };
     }
-
+    const allowed = new Set((tm && tm.inputAlphabet) ? tm.inputAlphabet : []);
+    // If for some reason input alphabet is empty, treat any non-empty input as invalid
+    if (allowed.size === 0) {
+      return { ok: false, tokens, badToken: tokens[0], tokenIndex: 0, stringIndex: 0 };
+    }
     for (let i = 0; i < tokens.length; i++) {
-      const tok = String(tokens[i]);
-      if (!allowed.has(tok)) {
-        return { ok: false, badToken: tok, badIndex: i, tokens };
+      if (!allowed.has(tokens[i])) {
+        // Map token index back to original string index (skip spaces)
+        let seen = -1;
+        let strIdx = 0;
+        for (let j = 0; j < (rawWord || "").length; j++) {
+          if ((rawWord || "")[j] === " ") continue;
+          seen++;
+          if (seen === i) {
+            strIdx = j;
+            break;
+          }
+        }
+        return { ok: false, tokens, badToken: tokens[i], tokenIndex: i, stringIndex: strIdx };
       }
     }
     return { ok: true, tokens };
   }
-
 
   function buildSymbolSet(tm, inputTokens) {
     const S = new Set();
@@ -967,7 +845,7 @@
   }
 
   function buildDominoes(tm, inputWord) {
-    const wTokens = tokenizeInputWordByAlphabet(tm, inputWord);
+    const wTokens = tokenizeWord(inputWord);
 
     const baseSymbols = buildSymbolSet(tm, wTokens);
 
@@ -1069,15 +947,6 @@
       return;
     }
 
-    // Fallbacks in case we ever load a TM without the new fields
-    const distinctCount = tm.uniqueTransitionCount != null
-      ? tm.uniqueTransitionCount
-      : (tm.transitions ? tm.transitions.length : 0);
-
-    const rawCount = tm.rawTransitionCount != null
-      ? tm.rawTransitionCount
-      : distinctCount;
-
     let text =
       t("tm.parsed_title") + "\n" +
       "  " + t("tm.input_alphabet") + " " + tm.inputAlphabet.join(", ") + "\n" +
@@ -1094,8 +963,7 @@
         (tm.acceptStates && tm.acceptStates.length
            ? tm.acceptStates.join(", ")
            : "∅") + "\n" +
-      "  " + t("tm.num_transitions_distinct") + " " + distinctCount + "\n" +
-      "  " + t("tm.num_transitions_raw") + " " + rawCount;
+      "  " + t("tm.num_transitions") + " " + tm.transitions.length;
 
     if (tm.comment && tm.comment.trim().length > 0) {
       text += "\n\n" + t("tm.comment_title") + "\n" + tm.comment;
@@ -1106,7 +974,6 @@
     renderTransitionTable(tm);
     clearTransitionHighlight();
   }
-
 
   function renderTransitionTable(tm) {
     const container = document.getElementById('tmTable');
@@ -1125,18 +992,11 @@
       label.style.display = "block";
     }
 
-    // Build column order: marker first, blank last, everything else in-between
-    const marker = tm.markerSymbol;
-    const blank = tm.blankSymbol;
-
-    const middle = tm.alphabet.filter(sym => sym !== marker && sym !== blank);
-
-    const tapeSymbols = [
-      marker,
-      ...middle,
-      blank
-    ];
-
+    const tapeSymbols = Array.from(new Set([
+      ...tm.alphabet,
+      tm.markerSymbol,
+      tm.blankSymbol
+    ]));
 
     const initial = tm.initialState;
     const acceptSet = new Set(tm.acceptStates || []);
@@ -1258,7 +1118,6 @@
         el.appendChild(top);
         el.appendChild(bottom);
 
-        // Drag from palette
         el.addEventListener('dragstart', (ev) => {
           ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
           highlightTransitionFromDominoIndex(i);
@@ -1268,7 +1127,6 @@
           clearTransitionHighlight();
         });
 
-        // Highlight on click/hover
         el.addEventListener('mousedown', () => {
           highlightTransitionFromDominoIndex(i);
         });
@@ -1279,15 +1137,6 @@
           clearTransitionHighlight();
         });
 
-        // NEW: double-click from palette → append to end of workspace
-        el.addEventListener('dblclick', () => {
-          const workspace = document.getElementById('workspace');
-          if (!workspace) return;
-          const newTile = createWorkspaceTile(i);
-          workspace.appendChild(newTile);
-          concatWorkspaceStrings();
-        });
-
         list.appendChild(el);
       }
 
@@ -1295,7 +1144,6 @@
       palette.appendChild(group);
     });
   }
-
 
   function createWorkspaceTile(idx, fixed = false) {
     const workspace = document.getElementById('workspace');
@@ -1382,17 +1230,17 @@
 
     const concatDiv = document.getElementById('concatStrings');
     if (children.length === 0) {
-      concatDiv.innerHTML = "";
+      concatDiv.textContent = "";
       return;
     }
 
-    // Determine max symbol width
+    // --- NEW: compute a common symbol width based on the longest symbol ---
     const allSeq = topSeq.concat(bottomSeq);
     const maxLen = allSeq.reduce(
       (m, t) => Math.max(m, String(t.sym).length),
       1
     );
-    const symbolWidth = (maxLen + 1) + 'ch';
+    const symbolWidth = (maxLen + 1) + 'ch'; // +1ch for padding
     concatDiv.style.setProperty('--sym-width', symbolWidth);
 
     function seqToHTML(seq) {
@@ -1416,22 +1264,13 @@
     const labelTop = `<span class="concat-label">${t("concat.top")}</span>`;
     const labelBottom = `<span class="concat-label">${t("concat.bottom")}</span>`;
 
-    // NEW: Split into scrollable + fixed status block
-    concatDiv.innerHTML = `
-      <div class="concat-scroll-area">
-        ${labelTop}${topHTML}<br>
-        ${labelBottom}${bottomHTML}
-      </div>
-      <div class="concat-status-area">
-        ${
-          equal
-            ? `<span class="equal">${t("concat.equal")}</span>`
-            : `<span class="not-equal">${t("concat.diff")}</span>`
-        }
-      </div>
-    `;
+    concatDiv.innerHTML =
+      `${labelTop}${topHTML}<br>` +
+      `${labelBottom}${bottomHTML}<br><br>` +
+      (equal
+        ? `<span class='equal'>${t("concat.equal")}</span>`
+        : `<span class='not-equal'>${t("concat.diff")}</span>`);
   }
-
 
 
   function setupWorkspaceDnD() {
@@ -1654,7 +1493,11 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey("status.no_mpcp");
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey('status.no_mpcp');
+      } else {
+        showStatus(t("status.no_mpcp"));
+      }
       return;
     }
 
@@ -1663,12 +1506,19 @@
     if (usePCP) {
       currentDominoes = transformMPCPtoPCP(mpcpDominoes);
       const K = currentDominoes.length;
-      setStatusFromKey("status.pcp_shown", { K, N });
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey('status.pcp_shown', { K, N });
+      } else {
+        showStatus(t("status.pcp_shown", { K, N }));
+      }
     } else {
       currentDominoes = mpcpDominoes.slice();
-      setStatusFromKey("status.mpcp_shown", { N });
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey('status.mpcp_shown', { N });
+      } else {
+        showStatus(t("status.mpcp_shown", { N }));
+      }
     }
-
 
     renderDominoPalette(currentDominoes);
 
@@ -1696,77 +1546,90 @@
       renderDominoPalette([]);
       document.getElementById('workspace').innerHTML = "";
       concatWorkspaceStrings();
-      setStatusFromKey(null); // clear status and its key
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey(null);
+      } else {
+        showStatus("");
+      }
       return;
     }
-
     const reader = new FileReader();
     reader.onload = (e) => {
-    try {
-      currentTM = parseMt(e.target.result);
-      // Clear input word when a new TM is loaded
-      const inputWordEl = document.getElementById('inputWord');
-      if (inputWordEl) {
-        inputWordEl.value = "";
-        inputWordEl.classList.remove("invalid-input");
+      try {
+        currentTM = parseMt(e.target.result);
+        renderTMInfo(currentTM);
+        if (typeof setStatusFromKey === 'function') {
+          setStatusFromKey("status.tm_parsed_ok");
+        } else {
+          showStatus(t("status.tm_parsed_ok"));
+        }
+      } catch (err) {
+        console.error(err);
+        if (typeof setStatusFromKey === 'function') {
+          setStatusFromKey("status.parse_error", { ERR: err.message }, true);
+        } else {
+          showStatus(t("status.parse_error", { ERR: err.message }), true);
+        }
+        currentTM = null;
+        renderTMInfo(null);
       }
-      
-      renderTMInfo(currentTM);
-      setStatusFromKey("status.tm_parsed_ok");
-    } catch (err) {
-      console.error(err);
-      setStatusFromKey("status.parse_error", { ERR: err.message }, true);
-      currentTM = null;
-      renderTMInfo(null);
-    }
     };
     reader.readAsText(file);
   });
 
-
   document.getElementById('generateBtn').addEventListener('click', () => {
     if (!currentTM) {
-      setStatusFromKey("status.need_mt", {}, true);
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey('status.need_mt', {}, true);
+      } else {
+        showStatus(t("status.need_mt"), true);
+      }
       return;
     }
-
     const inputEl = document.getElementById('inputWord');
-    const w = (inputEl && inputEl.value != null) ? inputEl.value : "";
+    const w = (inputEl ? inputEl.value : "") || "";
 
-    // Validate input word against TM input alphabet (empty word is valid)
+    // Validate input word w against the TM input alphabet (Σ).
+    // Empty word (ε) is valid.
     const v = validateInputWord(currentTM, w);
     if (!v.ok) {
       if (inputEl) {
-        inputEl.classList.add("invalid-input");
+        inputEl.classList.add('input-invalid');
         try {
+          // Highlight the offending character in the raw input (best-effort)
           inputEl.focus();
-          inputEl.setSelectionRange(v.badIndex, v.badIndex + 1);
+          inputEl.setSelectionRange(v.stringIndex, v.stringIndex + 1);
         } catch (e) {}
       }
 
-      setStatusFromKey(
-        "status.invalid_input_word",
-        {
-          CH: v.badToken,
-          IDX: v.badIndex,
-          ALPH: (currentTM.inputAlphabet || []).join(", ")
-        },
-        true
-      );
+      const allowed = (currentTM.inputAlphabet && currentTM.inputAlphabet.length)
+        ? currentTM.inputAlphabet.join(", ")
+        : "∅";
+
+      const params = {
+        CH: v.badToken,
+        IDX: (v.tokenIndex + 1),
+        ALPH: allowed
+      };
+
+      if (typeof setStatusFromKey === 'function') {
+        setStatusFromKey('status.invalid_input_word', params, true);
+      } else {
+        showStatus(t('status.invalid_input_word', params), true);
+      }
       return;
     }
-
-    if (inputEl) inputEl.classList.remove("invalid-input");
-
+    if (inputEl) {
+      inputEl.classList.remove('input-invalid');
+    }
     try {
       mpcpDominoes = buildDominoes(currentTM, w);
       updateDominoView();
     } catch (err) {
       console.error(err);
-      setStatusFromKey("status.gen_error", { ERR: err.message }, true);
+      showStatus(t("status.gen_error", { ERR: err.message }), true);
     }
   });
-
 
   document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
     const workspace = document.getElementById('workspace');
@@ -1829,54 +1692,36 @@
   setupSplitter();
   initLanguageFromStorage();
 
-  // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
-  const concatDiv = document.getElementById('concatStrings');
-  const wrapToggle = document.getElementById('wrapToggle');
-
-  // default preference = wrap
-  let wrapPref = true;
-  try {
-    const saved = localStorage.getItem('tm2pcp-wrap-mode');
-    if (saved === 'scroll') {
-      wrapPref = false;
-    } else if (saved === 'wrap') {
-      wrapPref = true;
-    }
-  } catch (e) {
-    // if localStorage fails, keep default
-  }
-
-  if (concatDiv) {
-    if (wrapPref) {
-      concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
-    } else {
-      concatDiv.style.setProperty('--concat-whitespace', 'pre');
-    }
-  }
-
-  if (wrapToggle && concatDiv) {
-    // Ensure checkbox matches the actual behavior
-    wrapToggle.checked = wrapPref;
-
-    wrapToggle.addEventListener('change', (e) => {
-      const wrap = e.target.checked;
-      if (wrap) {
-          concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
-
-        try {
-          localStorage.setItem('tm2pcp-wrap-mode', 'wrap');
-        } catch (err) {}
-      } else {
-          concatDiv.style.setProperty('--concat-whitespace', 'pre');
-
-        try {
-          localStorage.setItem('tm2pcp-wrap-mode', 'scroll');
-        } catch (err) {}
-      }
+  // Clear input-word validation highlighting as the user edits.
+  const inputWordEl = document.getElementById('inputWord');
+  if (inputWordEl) {
+    inputWordEl.addEventListener('input', () => {
+      inputWordEl.classList.remove('input-invalid');
     });
   }
 
+  // Initialize wrap / scroll behavior for Top/Bottom strings
+  const concatDiv = document.getElementById('concatStrings');
+  if (concatDiv) {
+    // default = wrap mode
+    concatDiv.classList.add('wrap-mode');
+    concatDiv.classList.remove('scroll-mode');
+  }
 
+  const wrapToggle = document.getElementById('wrapToggle');
+  if (wrapToggle && concatDiv) {
+    wrapToggle.addEventListener('change', (e) => {
+      const wrap = e.target.checked;
+      if (wrap) {
+        concatDiv.classList.add('wrap-mode');
+        concatDiv.classList.remove('scroll-mode');
+      } else {
+        concatDiv.classList.add('scroll-mode');
+        concatDiv.classList.remove('wrap-mode');
+      }
+    });
+  }
+  
 
   document.addEventListener('DOMContentLoaded', () => {
     // Footer year (with failsafe)
@@ -1898,20 +1743,7 @@
     if (lbl) {
       lbl.style.display = "none";
     }
-
-    const inputWordEl = document.getElementById('inputWord');
-    if (inputWordEl) inputWordEl.value = "";
-
-
   });
-
-
-  const inputEl = document.getElementById('inputWord');
-  if (inputEl) {
-    inputEl.addEventListener('input', () => {
-      inputEl.classList.remove("invalid-input");
-    });
-  }
 
 
 </script>
@@ -1924,7 +1756,6 @@
       — Departamento de Informática Teórica,
       <a href="https://www.inf.ufrgs.br/site/" target="_blank">Instituto de Informática</a>,
       <a href="https://www.ufrgs.br/site/" target="_blank">UFRGS</a>.
-      <a href="https://www.flaticon.com/br/icones-gratis/pontos" target="_blank" title="pontos ícones">Pontos ícones criados por rizal2109 - Flaticon</a>
     </div>
     <div>
       <span data-i18n="footer.code_label">Code on GitHub:</span>

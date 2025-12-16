@@ -47,10 +47,11 @@ const I18N = {
     "status.pcp_shown":
       "Showing PCP instance with {K} dominoes (derived from {N} MPCP dominoes).",
     "status.gen_error": "Error generating dominoes: {ERR}",
-    "status.invalid_input_word": "Invalid input word: symbol \"{CH}\" at position {IDX} is not in the input alphabet. Allowed symbols: {ALPH}.",
+    "status.invalid_input_word":
+      "Invalid input word: symbol \"{CH}\" at position {IDX} is not in the input alphabet. Allowed symbols: {ALPH}.",
 
     // About / header
-    "about.developed_by_label": "Developed by Prof. Bruno Iochins Grisci",
+    "about.developed_by_label": "Developed by:",
     "about.built_with": "(Webtool built using Generative AI — ChatGPT 5.1)",
     "about.based_on": "Based and inspired by the class of Prof. Rodrigo Machado:",
     "about.input_label": "Input format:",
@@ -122,11 +123,11 @@ const I18N = {
     "status.pcp_shown":
       "Exibindo instância de PCP com {K} dominós (derivados de {N} dominós de PCPM).",
     "status.gen_error": "Erro ao gerar dominós: {ERR}",
-    "status.invalid_input_word": "Palavra de entrada inválida: o símbolo \"{CH}\" na posição {IDX} não pertence ao alfabeto de entrada. Símbolos permitidos: {ALPH}.",
-
+    "status.invalid_input_word":
+      "Palavra de entrada inválida: o símbolo \"{CH}\" na posição {IDX} não pertence ao alfabeto de entrada. Símbolos permitidos: {ALPH}.",
 
     // About / header
-    "about.developed_by_label": "Desenvolvido por Prof. Bruno Iochins Grisci",
+    "about.developed_by_label": "Desenvolvido por:",
     "about.built_with": "(Ferramenta web criada com IA generativa — ChatGPT 5.1)",
     "about.based_on": "Baseada e inspirada na aula do Prof. Rodrigo Machado:",
     "about.input_label": "Formato de entrada:",
@@ -159,6 +160,8 @@ let lastStatusKey = null;
 let lastStatusParams = {};
 let lastStatusIsError = false;
 
+// Status helper that integrates with i18n.
+// Requires the page to define a global showStatus(msg, isError).
 function setStatusFromKey(key, params = {}, isError = false) {
   // If key is null/empty: clear status and clear the “last status” memory.
   if (!key) {
@@ -179,7 +182,6 @@ function setStatusFromKey(key, params = {}, isError = false) {
     showStatus(t(key, lastStatusParams), lastStatusIsError);
   }
 }
-
 
 function t(key, params = {}) {
   const dict = I18N[currentLang] || I18N["en"];
@@ -214,20 +216,13 @@ function setLanguage(lang) {
   if (!I18N[lang]) lang = "en";
   currentLang = lang;
   localStorage.setItem("tm2pcp-lang", lang);
-
   applyI18n();
 
-  // Re-render TM info in the new language (if available)
-  if (typeof renderTMInfo === "function") {
-    renderTMInfo(currentTM);
-  }
-
-  // Re-render status in the new language, if we know which message it is
+  // Re-render last status message in the new language (if any)
   if (lastStatusKey && typeof showStatus === "function") {
     showStatus(t(lastStatusKey, lastStatusParams), lastStatusIsError);
   }
 }
-
 
 function initLanguageFromStorage() {
   const saved = localStorage.getItem("tm2pcp-lang");

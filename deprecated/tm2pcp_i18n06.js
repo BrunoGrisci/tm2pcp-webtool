@@ -47,10 +47,10 @@ const I18N = {
     "status.pcp_shown":
       "Showing PCP instance with {K} dominoes (derived from {N} MPCP dominoes).",
     "status.gen_error": "Error generating dominoes: {ERR}",
-    "status.invalid_input_word": "Invalid input word: symbol \"{CH}\" at position {IDX} is not in the input alphabet. Allowed symbols: {ALPH}.",
+    "status.invalid_input_word": "Invalid input word: symbol \"{CH}\" at position {IDX} is not in the input alphabet. Allowed symbols: {ALPH}."
 
     // About / header
-    "about.developed_by_label": "Developed by Prof. Bruno Iochins Grisci",
+    "about.developed_by_label": "Developed by:",
     "about.built_with": "(Webtool built using Generative AI — ChatGPT 5.1)",
     "about.based_on": "Based and inspired by the class of Prof. Rodrigo Machado:",
     "about.input_label": "Input format:",
@@ -122,11 +122,11 @@ const I18N = {
     "status.pcp_shown":
       "Exibindo instância de PCP com {K} dominós (derivados de {N} dominós de PCPM).",
     "status.gen_error": "Erro ao gerar dominós: {ERR}",
-    "status.invalid_input_word": "Palavra de entrada inválida: o símbolo \"{CH}\" na posição {IDX} não pertence ao alfabeto de entrada. Símbolos permitidos: {ALPH}.",
+    "status.invalid_input_word": "Palavra de entrada inválida: o símbolo \"{CH}\" na posição {IDX} não pertence ao alfabeto de entrada. Símbolos permitidos: {ALPH}."
 
 
     // About / header
-    "about.developed_by_label": "Desenvolvido por Prof. Bruno Iochins Grisci",
+    "about.developed_by_label": "Desenvolvido por:",
     "about.built_with": "(Ferramenta web criada com IA generativa — ChatGPT 5.1)",
     "about.based_on": "Baseada e inspirada na aula do Prof. Rodrigo Machado:",
     "about.input_label": "Formato de entrada:",

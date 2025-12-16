@@ -234,14 +234,6 @@
       border-radius: 0.25rem;
     }
 
-    /* Input word validation feedback */
-    input[type="text"].invalid-input {
-      border-color: #dc2626;
-      outline: 2px solid #dc2626;
-      outline-offset: 1px;
-    }
-
-
     input[type="file"] {
       color: var(--fg);
     }
@@ -512,8 +504,8 @@
 <h1 data-i18n="title.main">TM → PCP Domino Generator</h1>
 
 <div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
-  <strong data-i18n="about.developed_by_label">Developed by: :</strong>
-  <br>
+  <strong data-i18n="about.developed_by_label">Developed by:</strong>
+  Prof. Bruno Iochins Grisci<br>
   <em data-i18n="about.built_with">
     (Webtool built using Generative AI — ChatGPT 5.1)
   </em><br>
@@ -579,7 +571,7 @@
   <div id="tmInfo"></div>
 
   <div id="tmTableContainer">
-    <div id="tmTableLabel" data-i18n="tm.table_label" style="display:none;">Transition Table</div>
+    <div id="tmTableLabel" data-i18n="tm.table_label">Transition Table (δ)</div>
     <div id="tmTable"></div>
   </div>
 </div>
@@ -625,26 +617,9 @@
 <script src="tm2pcp_i18n.js"></script>
 
 <script>
-  // Debug: if this triggers, the i18n file did not load
-  if (typeof initLanguageFromStorage !== "function") {
-    console.error("i18n failed to load: initLanguageFromStorage is not defined. Check tm2pcp_i18n.js path or run a local server.");
-  }
-</script>
-
-
-<script>
   let currentTM = null;
   let mpcpDominoes = [];
   let currentDominoes = [];
-
-  // ---- Diagnostics: confirm i18n file loaded correctly ----
-  console.log("[tm2pcp] i18n loaded?", {
-    hasT: (typeof window.t === "function"),
-    hasSetLanguage: (typeof window.setLanguage === "function"),
-    hasInitLang: (typeof window.initLanguageFromStorage === "function"),
-    hasSetStatusFromKey: (typeof window.setStatusFromKey === "function")
-  });
-
 
   function escapeHtml(str) {
     return String(str)
@@ -735,36 +710,6 @@
       st.style.color = dark ? '#e5e7eb' : '#333333';
     }
   }
-
-  // ---- Fallbacks if i18n script failed to load ----
-  if (typeof window.t !== "function") {
-    window.t = (key, params = {}) => {
-      // Minimal interpolation fallback: replaces {KEY} tokens if present
-      return String(key).replace(/\{(\w+)\}/g, (_, k) =>
-        params[k] != null ? String(params[k]) : `{${k}}`
-      );
-    };
-  }
-
-  if (typeof window.setStatusFromKey !== "function") {
-    window.setStatusFromKey = (key, params = {}, isError = false) => {
-      if (!key) return showStatus("", false);
-      showStatus(window.t(key, params), isError);
-    };
-  }
-
-  if (typeof window.setLanguage !== "function") {
-    window.setLanguage = (_lang) => {
-      // no-op fallback
-    };
-  }
-
-  if (typeof window.initLanguageFromStorage !== "function") {
-    window.initLanguageFromStorage = () => {
-      // no-op fallback
-    };
-  }
-
 
   function parseMt(content) {
     const rawLines = content.split(/\r?\n/);
@@ -867,79 +812,6 @@
     return w.split("").filter(ch => ch !== " ");
   }
 
-  // Tokenize input word using TM input alphabet.
-  // - Accepts empty word (returns [])
-  // - Supports multi-character symbols via greedy longest-match
-  // - Ignores spaces for convenience (same behavior as tokenizeWord)
-  function tokenizeInputWordByAlphabet(tm, w) {
-    const raw = (w || "").replace(/\s+/g, ""); // remove all whitespace
-    if (raw.length === 0) return [];
-
-    const alphabet = (tm && tm.inputAlphabet) ? tm.inputAlphabet.slice() : [];
-    if (alphabet.length === 0) {
-      // If TM has empty input alphabet, only empty word is valid.
-      // Non-empty raw becomes tokens that will fail validation later.
-      return raw.split("");
-    }
-
-    const hasMultiChar = alphabet.some(sym => String(sym).length > 1);
-
-    // Fast path: single-character alphabet
-    if (!hasMultiChar) {
-      return raw.split("");
-    }
-
-    // Greedy longest-match tokenization for multi-character symbols
-    const syms = alphabet
-      .map(s => String(s))
-      .sort((a, b) => b.length - a.length);
-
-    const tokens = [];
-    let i = 0;
-    while (i < raw.length) {
-      let matched = null;
-
-      for (const s of syms) {
-        if (s.length === 0) continue;
-        if (raw.startsWith(s, i)) {
-          matched = s;
-          break;
-        }
-      }
-
-      if (!matched) {
-        // Fallback: treat current character as a token (will fail validation)
-        tokens.push(raw[i]);
-        i += 1;
-      } else {
-        tokens.push(matched);
-        i += matched.length;
-      }
-    }
-    return tokens;
-  }
-
-  // Validate input word tokens against tm.inputAlphabet.
-  // Returns { ok: true, tokens } or { ok: false, badToken, badIndex, tokens }
-  function validateInputWord(tm, w) {
-    const tokens = tokenizeInputWordByAlphabet(tm, w);
-    const allowed = new Set((tm && tm.inputAlphabet) ? tm.inputAlphabet.map(String) : []);
-
-    // Empty word is always valid (even if alphabet is empty)
-    if (tokens.length === 0) {
-      return { ok: true, tokens };
-    }
-
-    for (let i = 0; i < tokens.length; i++) {
-      const tok = String(tokens[i]);
-      if (!allowed.has(tok)) {
-        return { ok: false, badToken: tok, badIndex: i, tokens };
-      }
-    }
-    return { ok: true, tokens };
-  }
-
-
   function buildSymbolSet(tm, inputTokens) {
     const S = new Set();
     for (const a of tm.alphabet) S.add(a);
@@ -967,7 +839,7 @@
   }
 
   function buildDominoes(tm, inputWord) {
-    const wTokens = tokenizeInputWordByAlphabet(tm, inputWord);
+    const wTokens = tokenizeWord(inputWord);
 
     const baseSymbols = buildSymbolSet(tm, wTokens);
 
@@ -1704,13 +1576,6 @@
     reader.onload = (e) => {
     try {
       currentTM = parseMt(e.target.result);
-      // Clear input word when a new TM is loaded
-      const inputWordEl = document.getElementById('inputWord');
-      if (inputWordEl) {
-        inputWordEl.value = "";
-        inputWordEl.classList.remove("invalid-input");
-      }
-      
       renderTMInfo(currentTM);
       setStatusFromKey("status.tm_parsed_ok");
     } catch (err) {
@@ -1723,50 +1588,20 @@
     reader.readAsText(file);
   });
 
-
   document.getElementById('generateBtn').addEventListener('click', () => {
     if (!currentTM) {
       setStatusFromKey("status.need_mt", {}, true);
       return;
     }
-
-    const inputEl = document.getElementById('inputWord');
-    const w = (inputEl && inputEl.value != null) ? inputEl.value : "";
-
-    // Validate input word against TM input alphabet (empty word is valid)
-    const v = validateInputWord(currentTM, w);
-    if (!v.ok) {
-      if (inputEl) {
-        inputEl.classList.add("invalid-input");
-        try {
-          inputEl.focus();
-          inputEl.setSelectionRange(v.badIndex, v.badIndex + 1);
-        } catch (e) {}
-      }
-
-      setStatusFromKey(
-        "status.invalid_input_word",
-        {
-          CH: v.badToken,
-          IDX: v.badIndex,
-          ALPH: (currentTM.inputAlphabet || []).join(", ")
-        },
-        true
-      );
-      return;
-    }
-
-    if (inputEl) inputEl.classList.remove("invalid-input");
-
+    const w = document.getElementById('inputWord').value || "";
     try {
       mpcpDominoes = buildDominoes(currentTM, w);
-      updateDominoView();
+      updateDominoView(); // this will call setStatusFromKey for MPCP/PCP status
     } catch (err) {
       console.error(err);
       setStatusFromKey("status.gen_error", { ERR: err.message }, true);
     }
   });
-
 
   document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
     const workspace = document.getElementById('workspace');
@@ -1898,20 +1733,7 @@
     if (lbl) {
       lbl.style.display = "none";
     }
-
-    const inputWordEl = document.getElementById('inputWord');
-    if (inputWordEl) inputWordEl.value = "";
-
-
   });
-
-
-  const inputEl = document.getElementById('inputWord');
-  if (inputEl) {
-    inputEl.addEventListener('input', () => {
-      inputEl.classList.remove("invalid-input");
-    });
-  }
 
 
 </script>

@@ -39,7 +39,6 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
   - Símbolo em branco exibido como a **última coluna**
   - Destaque da transição correspondente ao selecionar um dominó
 
-![Interactive manipulation of dominoes](docs/gifs/interaction.gif)
 
 ---
 
@@ -52,7 +51,6 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
   - Transições distintas efetivamente utilizadas pela máquina
 - Tratamento correto de múltiplos estados de aceitação e rejeição implícita
 
-![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
 
 ---
 

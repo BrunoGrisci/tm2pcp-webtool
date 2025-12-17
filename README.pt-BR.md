@@ -39,7 +39,7 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
   - Símbolo em branco exibido como a **última coluna**
   - Destaque da transição correspondente ao selecionar um dominó
 
-![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
+![Interactive manipulation of dominoes](docs/gifs/interaction.gif)
 
 ---
 

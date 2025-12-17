@@ -38,7 +38,6 @@ The tool is designed for teaching **Theory of Computation**, allowing students t
   - Blank symbol shown as the **last column**
   - Highlighting of the relevant transition when a domino is selected
 
-  ![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
 
 ---
 
@@ -51,7 +50,6 @@ The tool is designed for teaching **Theory of Computation**, allowing students t
   - Distinct transitions used by the machine
 - Correct handling of multiple accepting states and implicit rejection
 
-![MPCP to PCP transformation](docs/gifs/mpcp_to_pcp.gif)
 
 ---
 

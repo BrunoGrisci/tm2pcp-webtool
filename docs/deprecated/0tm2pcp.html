@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-T82L645Q');</script>
+  <!-- End Google Tag Manager -->
+
+  <meta charset="UTF-8">
+  <title>TM → PCP Dominoes</title>
+  <!--  <link rel="icon" href="domino.png"> -->
+  <style>
+
+    .concat-label {
+      display: inline-block;
+      min-width: 5em;      /* enough for "Bottom:" / "Base:" */
+      text-align: right;
+      margin-right: 0.5em; /* small gap before the first symbol */
+    }
+
+    .concat-symbol {
+      display: inline-block;
+      min-width: var(--sym-width, 3ch); /* default, overridden from JS */
+      text-align: center;
+      margin: 0 0.25ch; /* small horizontal spacing between symbols */
+    }
+
+    /* Scrollable region for Top/Bottom */
+    .concat-scroll-area {
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+      white-space: var(--concat-whitespace, pre-wrap);
+      border-bottom: 1px solid transparent; /* keeps visual separation */
+    }
+
+    /* Status is always visible, never scrolls */
+    .concat-status-area {
+      white-space: normal; /* allow wrapping freely */
+      margin-top: 0.5rem;
+    }
+
+
+    .app-footer {
+      margin-top: 2rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--panel-border);
+      font-size: 0.8rem;
+      color: var(--small-note);
+    }
+
+    .app-footer a {
+      color: inherit;
+      text-decoration: underline;
+    }
+
+    .app-footer a:hover {
+      text-decoration: none;
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    @media (min-width: 700px) {
+      .footer-inner {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+    }
+
+    .tm-summary {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: flex-end;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    #tmInfo {
+      flex: 1 1 auto;
+      max-width: 50%;
+      overflow-y: auto;
+      max-height: 250px;
+    }
+
+    #tmTableContainer {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    #tmTableLabel {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    #tmTable {
+      flex: 1 1 260px;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .tm-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .tm-table th,
+    .tm-table td {
+      border: 1px solid var(--panel-border);
+      padding: 0.2rem 0.35rem;
+      text-align: center;
+    }
+
+    .tm-table thead th {
+      background: var(--panel-bg);
+      position: sticky;
+      top: 0;
+    }
+
+    .tm-row-highlight > th,
+    .tm-row-highlight > td {
+      background-color: #fef3c7;
+    }
+    body.dark-mode .tm-row-highlight > th,
+    body.dark-mode .tm-row-highlight > td {
+      background-color: #4b3b16;
+    }
+
+    .tm-col-header-highlight {
+      background-color: #e0f2fe;
+    }
+    body.dark-mode .tm-col-header-highlight {
+      background-color: #1e3a5f;
+    }
+
+    .tm-col-highlight {
+      background-color: #e0f2fe;
+    }
+    body.dark-mode .tm-col-highlight {
+      background-color: #1e3a5f;
+    }
+
+    .tm-cell-highlight {
+      outline: 2px solid #dc2626;
+      outline-offset: -2px;
+      font-weight: 700;
+    }
+
+    .tm-state-cell {
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .tm-state-cell-init {
+      font-weight: 600;
+    }
+
+    .tm-state-cell-accept {
+      color: #d97706;
+    }
+    body.dark-mode .tm-state-cell-accept {
+      color: #fbbf24;
+    }
+
+    :root {
+      --bg: #ffffff;
+      --fg: #222222;
+      --panel-bg: #ffffff;
+      --panel-border: #dddddd;
+      --workspace-border: #bbbbbb;
+      --domino-bg: #ffffff;
+      --domino-shadow: rgba(0,0,0,0.1);
+      --status-ok: #333333;
+      --status-err: darkred;
+      --small-note: #555555;
+    }
+
+    body.dark-mode {
+      --bg: #101215;
+      --fg: #e5e7eb;
+      --panel-bg: #111827;
+      --panel-border: #374151;
+      --workspace-border: #4b5563;
+      --domino-bg: #1f2937;
+      --domino-shadow: rgba(0,0,0,0.6);
+      --status-ok: #e5e7eb;
+      --status-err: #fca5a5;
+      --small-note: #9ca3af;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 1.5rem;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      padding: 0.25rem 0.5rem;
+      min-width: 12rem;
+      background: var(--panel-bg);
+      color: var(--fg);
+      border: 1px solid var(--panel-border);
+      border-radius: 0.25rem;
+    }
+
+    input[type="file"] {
+      color: var(--fg);
+    }
+
+    button {
+      padding: 0.4rem 0.8rem;
+      border-radius: 0.4rem;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      background: var(--panel-bg);
+      color: var(--fg);
+    }
+
+    button:hover {
+      background: #f3f3f3;
+    }
+    body.dark-mode button:hover {
+      background: #1f2937;
+    }
+
+    #tmInfo, #status {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      white-space: pre-wrap;
+    }
+
+    .split-container {
+      display: flex;
+      gap: 0;
+      margin-top: 1rem;
+      min-height: 220px;
+    }
+
+    #leftPane,
+    #rightPane {
+      min-width: 200px;
+    }
+
+    .divider {
+      width: 5px;
+      cursor: col-resize;
+      background: var(--panel-border);
+      flex: 0 0 auto;
+    }
+
+    body.dark-mode .divider {
+      background: #4b5563;
+    }
+
+    .panel {
+      flex: 1 1 320px;
+      border: 1px solid var(--panel-border);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      min-height: 200px;
+      background: var(--panel-bg);
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .panel h2 {
+      font-size: 1.0rem;
+      margin-top: 0;
+    }
+
+    .domino-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .step-group {
+      margin-bottom: 0.75rem;
+    }
+
+    .step-header {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .domino {
+      border: 1px solid #aaa;
+      border-radius: 0.4rem;
+      padding: 0.25rem 0.4rem;
+      width: 90px;
+      font-size: 0.75rem;
+      background: var(--domino-bg);
+      box-shadow: 1px 1px 2px var(--domino-shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: grab;
+      position: relative;
+      transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      color: var(--fg);
+    }
+
+    .domino-top, .domino-bottom {
+      text-align: center;
+      padding: 0.1rem 0.15rem;
+      border-radius: 0.2rem;
+    }
+
+    .domino-top {
+      border-bottom: 1px solid #ccc;
+      background: #f8f8f8;
+    }
+
+    body.dark-mode .domino-top {
+      background: #111827;
+      border-bottom-color: #4b5563;
+    }
+
+    .domino-bottom {
+      background: #fdfdfd;
+    }
+
+    body.dark-mode .domino-bottom {
+      background: #1f2937;
+    }
+
+    #workspace {
+      min-height: 160px;
+      border: 2px dashed var(--workspace-border);
+      border-radius: 0.5rem;
+      padding: 0.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    #workspace.dragover {
+      border-color: #4a90e2;
+      background: #f5f9ff;
+    }
+    body.dark-mode #workspace.dragover {
+      background: #111827;
+    }
+
+    #concatStrings {
+      margin-top: 0.75rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      overflow-x: auto;      /* allow horizontal scrolling when needed */
+      padding-bottom: 0.75rem;  /* extra space so text is not covered by the scrollbar */
+    }
+
+    /* wrap mode (current behavior) */
+    #concatStrings.wrap-mode {
+      white-space: pre-wrap;
+    }
+
+    /* scroll mode: no wrapping, only explicit line breaks */
+    #concatStrings.scroll-mode {
+      white-space: pre;      /* respects \n / <br>, but no automatic wrapping */
+    }
+
+    .equal {
+      color: #22c55e;
+      font-weight: bold;
+    }
+    .not-equal {
+      color: #f97373;
+      font-weight: bold;
+    }
+
+    .small-note {
+      font-size: 0.8rem;
+      color: var(--small-note);
+      margin-top: 0.25rem;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -0.45rem;
+      right: -0.45rem;
+      border-radius: 50%;
+      border: 1px solid #ccc;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      font-size: 0.7rem;
+      line-height: 14px;
+      text-align: center;
+      background: #f5f5f5;
+      cursor: pointer;
+      color: #111827;
+    }
+    .delete-btn:hover {
+      background: #e6e6e6;
+    }
+
+    .domino.step-1 { border-color: #1f77b4; }
+    .domino.step-1 .domino-top { background: #e8f1fb; }
+    body.dark-mode .domino.step-1 .domino-top { background: #1d3552; }
+
+    .domino.step-2 { border-color: #ff7f0e; }
+    .domino.step-2 .domino-top { background: #ffe9d5; }
+    body.dark-mode .domino.step-2 .domino-top { background: #4b2a12; }
+
+    .domino.step-3 { border-color: #2ca02c; }
+    .domino.step-3 .domino-top { background: #e4f4e4; }
+    body.dark-mode .domino.step-3 .domino-top { background: #1e3b20; }
+
+    .domino.step-4 { border-color: #d62728; }
+    .domino.step-4 .domino-top { background: #fbe4e4; }
+    body.dark-mode .domino.step-4 .domino-top { background: #4b1516; }
+
+    .domino.step-5 { border-color: #9467bd; }
+    .domino.step-5 .domino-top { background: #efe6fb; }
+    body.dark-mode .domino.step-5 .domino-top { background: #312151; }
+
+    .domino.step-6 { border-color: #8c564b; }
+    .domino.step-6 .domino-top { background: #f3e9e6; }
+    body.dark-mode .domino.step-6 .domino-top { background: #42221b; }
+
+    .domino.step-7 { border-color: #17becf; }
+    .domino.step-7 .domino-top { background: #e5f6f8; }
+    body.dark-mode .domino.step-7 .domino-top { background: #10434a; }
+
+    .domino.step-8 { border-color: #555; }
+    .domino.step-8 .domino-top { background: #eeeeee; }
+    body.dark-mode .domino.step-8 .domino-top { background: #374151; }
+
+    .step-text-1 { color: #1f77b4; }
+    .step-text-2 { color: #ff7f0e; }
+    .step-text-3 { color: #2ca02c; }
+    .step-text-4 { color: #d62728; }
+    .step-text-5 { color: #9467bd; }
+    .step-text-6 { color: #f59e0b; }
+    .step-text-7 { color: #17becf; }
+    .step-text-8 { color: #9ca3af; }
+
+    .lang-btn {
+      border: 1px solid transparent;
+      background: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0.1rem 0.25rem;
+    }
+    .lang-btn.active-lang {
+      border-color: var(--panel-border);
+      border-radius: 0.25rem;
+    }
+  </style>
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PG6S1LBB4Y"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-PG6S1LBB4Y');
+    </script>
+
+</head>
+<body>
+
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T82L645Q"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->  
+
+<h1 data-i18n="title.main">TM → PCP Domino Generator</h1>
+
+<div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
+  <strong data-i18n="about.developed_by_label">Developed by:</strong>
+  Prof. Bruno Iochins Grisci<br>
+  <em data-i18n="about.built_with">
+    (Webtool built using Generative AI — ChatGPT 5.1)
+  </em><br>
+  Departamento de Informática Teórica —
+  <a href="https://www.inf.ufrgs.br/site/" target="_blank">Instituto de Informática</a><br>
+  <a href="https://www.ufrgs.br/site/" target="_blank">Universidade Federal do Rio Grande do Sul (UFRGS)</a><br>
+  Website: <a href="https://brunogrisci.github.io/" target="_blank">https://brunogrisci.github.io/</a>
+  <br><br>
+  <strong data-i18n="about.based_on">
+    Based and inspired by the class of Prof. Rodrigo Machado:
+  </strong><br>
+  <a href="https://link.inf.ufrgs.br/212-AALr"
+     target="_blank">
+     https://link.inf.ufrgs.br/212-AALr
+  </a>
+</div>
+
+<div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
+  <strong data-i18n="about.input_label">Input format:</strong><br>
+  <span data-i18n="about.input_sentence1">
+    This webtool accepts a <code>.mt</code> file describing a Turing Machine created using the
+    Simulador de Máquina de Turing developed by Prof. Rodrigo Machado:
+  </span><br>
+  <a href="https://link.inf.ufrgs.br/213-EIJy" target="_blank">
+    https://link.inf.ufrgs.br/213-EIJy
+  </a><br>
+  <span data-i18n="about.input_sentence2">
+    The <code>.mt</code> file encodes the input &amp; auxiliary alphabet, states, transitions, marker and blank symbols.
+  </span>
+</div>
+
+<div class="row">
+  <div>
+    <label for="mtFile"><span data-i18n="label.mt_file">.mt file:</span> </label>
+    <input type="file" id="mtFile" accept=".mt">
+  </div>
+  <div>
+    <label for="inputWord"><span data-i18n="label.input_word">Input word w:</span> </label>
+    <input type="text" id="inputWord" placeholder="e.g., ()">
+  </div>
+  <div>
+    <button id="generateBtn" data-i18n="label.generate_btn">Generate dominoes</button>
+  </div>
+  <div style="display:flex; align-items:center; gap:0.6rem; margin-left:auto;">
+    <label style="font-weight:400; cursor:pointer;">
+      <input type="checkbox" id="toggleMPCP">
+      <span data-i18n="label.mpcp_to_pcp">MPCP ⇒ PCP</span>
+    </label>
+
+    <label style="font-weight:400; cursor:pointer;">
+      <input type="checkbox" id="darkModeToggle">
+      <span data-i18n="label.dark_mode">Dark mode</span>
+    </label>
+
+    <div id="langToggle" style="display:flex; gap:0.25rem;">
+      <button type="button" class="lang-btn" data-lang="en" aria-label="English">🇬🇧</button>
+      <button type="button" class="lang-btn" data-lang="pt-BR" aria-label="Português do Brasil">🇧🇷</button>
+    </div>
+  </div>
+</div>
+
+<div class="tm-summary">
+  <div id="tmInfo"></div>
+
+  <div id="tmTableContainer">
+    <div id="tmTableLabel" data-i18n="tm.table_label">Transition Table (δ)</div>
+    <div id="tmTable"></div>
+  </div>
+</div>
+
+<div id="status"></div>
+
+<div class="split-container">
+  <div id="leftPane" class="panel">
+    <h2 data-i18n="title.palette">Domino palette</h2>
+    <div class="small-note" data-i18n="note.palette">
+      Dominoes are grouped and color-coded by construction step. When “MPCP ⇒ PCP” is checked, you see the PCP instance, but still separated by their original steps.
+    </div>
+    <div id="dominoPalette"></div>
+  </div>
+
+  <div id="divider" class="divider" title="Drag to resize"></div>
+
+  <div id="rightPane" class="panel">
+    <h2 data-i18n="title.workspace">Workspace (sequence of dominoes)</h2>
+    <div class="small-note" data-i18n="note.workspace">
+      Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.
+    </div>
+
+    <div id="workspace"></div>
+
+    <div style="margin-top:0.5rem; display:flex; align-items:center; gap:0.75rem;">
+      <button id="clearWorkspaceBtn" data-i18n="button.clear_workspace">
+        Clear workspace
+      </button>
+
+      <label style="font-weight:400; cursor:pointer;">
+        <input type="checkbox" id="wrapToggle" checked>
+        <span data-i18n="label.wrap_strings">Wrap strings</span>
+      </label>
+    </div>
+
+    <div id="concatStrings"></div>
+
+  </div>
+</div>
+
+<!-- Load i18n logic -->
+<script src="tm2pcp_i18n.js"></script>
+
+<script>
+  let currentTM = null;
+  let mpcpDominoes = [];
+  let currentDominoes = [];
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function clearTransitionHighlight() {
+    const table = document.querySelector('.tm-table');
+    if (!table) return;
+
+    table.querySelectorAll('.tm-row-highlight').forEach(tr => {
+      tr.classList.remove('tm-row-highlight');
+    });
+    table.querySelectorAll('.tm-col-header-highlight').forEach(th => {
+      th.classList.remove('tm-col-header-highlight');
+    });
+    table.querySelectorAll('.tm-col-highlight').forEach(td => {
+      td.classList.remove('tm-col-highlight');
+    });
+    table.querySelectorAll('.tm-cell-highlight').forEach(td => {
+      td.classList.remove('tm-cell-highlight');
+    });
+  }
+
+  function highlightTransition(q, a) {
+    clearTransitionHighlight();
+    const table = document.querySelector('.tm-table');
+    if (!table) return;
+
+    const row = table.querySelector(`tbody tr[data-state="${CSS.escape(q)}"]`);
+    if (row) {
+      row.classList.add('tm-row-highlight');
+    }
+
+    const colHeader = table.querySelector(`.tm-col-header[data-symbol="${CSS.escape(a)}"]`);
+    if (!colHeader) return;
+
+    colHeader.classList.add('tm-col-header-highlight');
+
+    const headerCells = Array.from(colHeader.parentNode.children);
+    const colIndex = headerCells.indexOf(colHeader);
+    if (colIndex < 0) return;
+
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const cells = tr.children;
+      if (colIndex < cells.length) {
+        cells[colIndex].classList.add('tm-col-highlight');
+      }
+    });
+
+    const cell = table.querySelector(`td[data-q="${CSS.escape(q)}"][data-a="${CSS.escape(a)}"]`);
+    if (cell) {
+      cell.classList.add('tm-cell-highlight');
+    }
+  }
+
+  function highlightTransitionFromDominoIndex(idx) {
+    const d = currentDominoes[idx];
+    if (!d || (d.step !== 2 && d.step !== 3) || !d.srcQ || !d.srcA) {
+      clearTransitionHighlight();
+      return;
+    }
+    highlightTransition(d.srcQ, d.srcA);
+  }
+
+  function applyDarkModeFromStorage() {
+    const saved = localStorage.getItem('tm2pcp-dark-mode');
+    const isDark = saved === 'true';
+    document.body.classList.toggle('dark-mode', isDark);
+    const chk = document.getElementById('darkModeToggle');
+    if (chk) chk.checked = isDark;
+  }
+
+  function toggleDarkMode(enabled) {
+    document.body.classList.toggle('dark-mode', enabled);
+    localStorage.setItem('tm2pcp-dark-mode', enabled ? 'true' : 'false');
+  }
+
+  function showStatus(msg, isError = false) {
+    const st = document.getElementById('status');
+    st.textContent = msg || '';
+    const dark = document.body.classList.contains('dark-mode');
+    if (isError) {
+      st.style.color = dark ? '#fca5a5' : 'darkred';
+    } else {
+      st.style.color = dark ? '#e5e7eb' : '#333333';
+    }
+  }
+
+  function parseMt(content) {
+    const rawLines = content.split(/\r?\n/);
+
+    if (rawLines.length < 7) {
+      throw new Error(
+        "Unexpected .mt format: need at least 7 lines " +
+        "(alphabet, aux alphabet, marker, blank, states, initial, accepting)."
+      );
+    }
+
+    const line = (idx) =>
+      idx < rawLines.length ? rawLines[idx].trim() : "";
+
+    const inputAlphabetLine = line(0);
+    const auxAlphabetLine   = line(1);
+    const markerSymbol      = line(2);
+    const blankSymbol       = line(3);
+    const statesLine        = line(4);
+    const initialState      = line(5);
+    const acceptStatesLine  = line(6);
+    const transitionsLine   = line(7);
+
+    const commentBlock = rawLines.slice(8).join("\n").trim();
+
+    const parseCSV = (line) =>
+      line
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+    const inputAlphabet = parseCSV(inputAlphabetLine);
+    const auxAlphabet   = parseCSV(auxAlphabetLine);
+    const states        = parseCSV(statesLine);
+    const acceptStates  = parseCSV(acceptStatesLine);
+
+    const tapeAlphabet = Array.from(new Set([...inputAlphabet, ...auxAlphabet]));
+
+    const transitions = [];
+    if (transitionsLine && transitionsLine.trim().length > 0) {
+      const parts = transitionsLine
+        .split(",,,")
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      for (const part of parts) {
+        const f = part.split(",").map((s) => s.trim());
+        if (f.length < 5) continue;
+        let q, a, q2, b, dir;
+        if (f.length === 6 && f[2] === "") {
+          [q, a, , q2, b, dir] = f;
+        } else if (f.length === 5) {
+          [q, a, q2, b, dir] = f;
+        } else {
+          q   = f[0];
+          a   = f[1];
+          q2  = f[f.length - 3];
+          b   = f[f.length - 2];
+          dir = f[f.length - 1];
+        }
+        transitions.push({ q, a, q2, b, dir });
+      }
+    }
+
+    // Count of raw transition entries (before deduplication)
+    const rawTransitionCount = transitions.length;
+
+    // Deduplicate transitions: many .mt files repeat identical transitions,
+    // which do not change the machine's behavior but would inflate #Transitions.
+    const uniqueMap = new Map();
+    for (const tr of transitions) {
+      if (!tr.q || tr.a == null || !tr.q2 || !tr.b || !tr.dir) continue;
+      const key = `${tr.q}||${tr.a}||${tr.q2}||${tr.b}||${tr.dir}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, tr);
+      }
+    }
+    const uniqueTransitions = Array.from(uniqueMap.values());
+
+
+    return {
+      inputAlphabet,
+      auxAlphabet,
+      alphabet: tapeAlphabet,
+      markerSymbol,
+      blankSymbol,
+      states,
+      initialState,
+      acceptStates,
+      transitions: uniqueTransitions,
+      rawTransitionCount,
+      uniqueTransitionCount: uniqueTransitions.length,
+      comment: commentBlock
+    };
+
+
+  }
+
+  function tokenizeWord(w) {
+    return w.split("").filter(ch => ch !== " ");
+  }
+
+  function buildSymbolSet(tm, inputTokens) {
+    const S = new Set();
+    for (const a of tm.alphabet) S.add(a);
+    S.add(tm.markerSymbol);
+    S.add(tm.blankSymbol);
+    for (const tr of tm.transitions) {
+      if (tr.a) S.add(tr.a);
+      if (tr.b) S.add(tr.b);
+    }
+    for (const t of inputTokens) S.add(t);
+    return Array.from(S);
+  }
+
+  function chooseFreshSymbol(preferred, used) {
+    const candidates = [
+      preferred,
+      "⋆", "☆", "@", "§", "+", "◊", "◆", "◇"
+    ];
+    for (const c of candidates) {
+      if (!used.has(c)) return c;
+    }
+    let i = 1;
+    while (used.has(preferred + i)) i++;
+    return preferred + i;
+  }
+
+  function buildDominoes(tm, inputWord) {
+    const wTokens = tokenizeWord(inputWord);
+
+    const baseSymbols = buildSymbolSet(tm, wTokens);
+
+    const usedForHash = new Set(baseSymbols);
+    const HASH = chooseFreshSymbol("#", usedForHash);
+
+    const S = baseSymbols;
+    const q0 = tm.initialState;
+    const acceptStates = tm.acceptStates || [];
+
+    const dominos = [];
+
+    function addDomino(topTokens, bottomTokens, info, step, srcQ = null, srcA = null) {
+      dominos.push({
+        top: topTokens.slice(),
+        bottom: bottomTokens.slice(),
+        info: info || "",
+        step,
+        srcQ,
+        srcA
+      });
+    }
+
+    addDomino(
+      [HASH],
+      [HASH, q0, tm.markerSymbol, ...wTokens, HASH],
+      "Step 1: initial configuration",
+      1
+    );
+
+    for (const tr of tm.transitions) {
+      const {q, a, q2, b, dir} = tr;
+      if (!a || !b || !q || !q2) continue;
+      if (acceptStates.includes(q)) continue;
+      if (dir === "D") {
+        addDomino(
+          [q, a],
+          [b, q2],
+          "Step 2: right move " + q + "," + a + " → (" + q2 + "," + b + ",D)",
+          2,
+          q, a
+        );
+      }
+    }
+
+    for (const tr of tm.transitions) {
+      const {q, a, q2, b, dir} = tr;
+      if (!a || !b || !q || !q2) continue;
+      if (acceptStates.includes(q)) continue;
+      if (dir === "E") {
+        for (const c of S) {
+          addDomino(
+            [c, q, a],
+            [q2, c, b],
+            "Step 3: left move " + q + "," + a + " → (" + q2 + "," + b + ",E)",
+            3,
+            q, a
+          );
+        }
+      }
+    }
+
+    for (const a of S) {
+      addDomino(
+        [a],
+        [a],
+        "Step 4: copy symbol " + a,
+        4
+      );
+    }
+
+    addDomino([HASH], [HASH], "Step 5: boundary #/#", 5);
+    addDomino([HASH], [tm.blankSymbol, HASH], "Step 5: boundary #/β#", 5);
+
+    for (const qf of acceptStates) {
+      for (const a of S) {
+        addDomino([a, qf], [qf], "Step 6: collapse a " + qf + " → " + qf, 6);
+        addDomino([qf, a], [qf], "Step 6: collapse " + qf + " a → " + qf, 6);
+      }
+    }
+
+    for (const qf of acceptStates) {
+      addDomino(
+        [qf, HASH, HASH],
+        [HASH],
+        "Step 7: final cleanup " + qf + "##/#",
+        7
+      );
+    }
+
+    return dominos;
+  }
+
+  function renderTMInfo(tm) {
+    const div = document.getElementById('tmInfo');
+    if (!tm) {
+      div.textContent = "";
+      renderTransitionTable(null);
+      return;
+    }
+
+    // Fallbacks in case we ever load a TM without the new fields
+    const distinctCount = tm.uniqueTransitionCount != null
+      ? tm.uniqueTransitionCount
+      : (tm.transitions ? tm.transitions.length : 0);
+
+    const rawCount = tm.rawTransitionCount != null
+      ? tm.rawTransitionCount
+      : distinctCount;
+
+    let text =
+      t("tm.parsed_title") + "\n" +
+      "  " + t("tm.input_alphabet") + " " + tm.inputAlphabet.join(", ") + "\n" +
+      "  " + t("tm.aux_alphabet") + " " +
+        (tm.auxAlphabet && tm.auxAlphabet.length
+           ? tm.auxAlphabet.join(", ")
+           : "∅") + "\n" +
+      "  " + t("tm.tape_alphabet") + " " + tm.alphabet.join(", ") + "\n" +
+      "  " + t("tm.marker") + " " + tm.markerSymbol + "\n" +
+      "  " + t("tm.blank") + " " + tm.blankSymbol + "\n" +
+      "  " + t("tm.states") + " " + tm.states.join(", ") + "\n" +
+      "  " + t("tm.initial_state") + " " + tm.initialState + "\n" +
+      "  " + t("tm.accepting_states") + " " +
+        (tm.acceptStates && tm.acceptStates.length
+           ? tm.acceptStates.join(", ")
+           : "∅") + "\n" +
+      "  " + t("tm.num_transitions_distinct") + " " + distinctCount + "\n" +
+      "  " + t("tm.num_transitions_raw") + " " + rawCount;
+
+    if (tm.comment && tm.comment.trim().length > 0) {
+      text += "\n\n" + t("tm.comment_title") + "\n" + tm.comment;
+    }
+
+    div.textContent = text;
+
+    renderTransitionTable(tm);
+    clearTransitionHighlight();
+  }
+
+
+  function renderTransitionTable(tm) {
+    const container = document.getElementById('tmTable');
+    const label = document.getElementById('tmTableLabel');
+    if (!container) return;
+
+    if (!tm) {
+      container.innerHTML = "";
+      if (label) {
+        label.style.display = "none";
+      }
+      return;
+    }
+
+    if (label) {
+      label.style.display = "block";
+    }
+
+    const tapeSymbols = Array.from(new Set([
+      ...tm.alphabet,
+      tm.markerSymbol,
+      tm.blankSymbol
+    ]));
+
+    const initial = tm.initialState;
+    const acceptSet = new Set(tm.acceptStates || []);
+
+    const others = tm.states.filter(
+      s => s !== initial && !acceptSet.has(s)
+    );
+    const accepts = tm.states.filter(
+      s => acceptSet.has(s) && s !== initial
+    );
+
+    const rowStates = [];
+    if (initial) rowStates.push(initial);
+    rowStates.push(...others);
+    rowStates.push(...accepts);
+
+    const transMap = new Map();
+    for (const tr of tm.transitions) {
+      if (!tr.q || tr.a == null) continue;
+      const key = tr.q + "||" + tr.a;
+      if (!transMap.has(key)) {
+        transMap.set(key, tr);
+      }
+    }
+
+    let html = '<table class="tm-table"><thead><tr>';
+    html += '<th>q / a</th>';
+    for (const a of tapeSymbols) {
+      html += `<th class="tm-col-header" data-symbol="${escapeHtml(a)}">${escapeHtml(a)}</th>`;
+    }
+    html += '</tr></thead><tbody>';
+
+    for (const q of rowStates) {
+      const isInit = (q === initial);
+      const isAcc  = acceptSet.has(q);
+
+      let labelState = q;
+      if (isInit && isAcc) labelState = '→★ ' + q;
+      else if (isInit)     labelState = '→ '  + q;
+      else if (isAcc)      labelState = '★ '  + q;
+
+      let stateClass = "tm-state-cell";
+      if (isInit)  stateClass += " tm-state-cell-init";
+      if (isAcc)   stateClass += " tm-state-cell-accept";
+
+      html += `<tr data-state="${escapeHtml(q)}"><th class="${stateClass}">${escapeHtml(labelState)}</th>`;
+
+      for (const a of tapeSymbols) {
+        const key = q + "||" + a;
+        const tr = transMap.get(key);
+        if (tr) {
+          const cell = `${tr.q2},${tr.b},${tr.dir}`;
+          html += `<td data-q="${escapeHtml(q)}" data-a="${escapeHtml(a)}">${escapeHtml(cell)}</td>`;
+        } else {
+          html += `<td data-q="${escapeHtml(q)}" data-a="${escapeHtml(a)}">–</td>`;
+        }
+      }
+
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+
+  function tokensToDisplay(tokens) {
+    return tokens.join(" ");
+  }
+
+  function renderDominoPalette(dominos) {
+    const palette = document.getElementById('dominoPalette');
+    palette.innerHTML = "";
+
+    const steps = Array.from(new Set(dominos.map(d => d.step))).sort((a, b) => a - b);
+    const usePCP = document.getElementById('toggleMPCP')?.checked;
+
+    steps.forEach(step => {
+      const groupDominos = dominos.filter(d => d.step === step);
+      if (groupDominos.length === 0) return;
+
+      const group = document.createElement('div');
+      group.className = 'step-group';
+
+      const header = document.createElement('div');
+      header.className = 'step-header';
+
+      if (step === 8) {
+        header.textContent = t("step.header8");
+      } else if (usePCP) {
+        header.textContent = t("step.header_pcp", { step });
+      } else {
+        header.textContent = t("step.header_plain", { step });
+      }
+
+      group.appendChild(header);
+
+      const list = document.createElement('div');
+      list.className = 'domino-list';
+
+      for (let i = 0; i < dominos.length; i++) {
+        const d = dominos[i];
+        if (d.step !== step) continue;
+
+        const el = document.createElement('div');
+        el.className = 'domino step-' + step;
+        el.draggable = true;
+        el.dataset.dominoIndex = String(i);
+        el.title = d.info;
+
+        const top = document.createElement('div');
+        top.className = 'domino-top';
+        top.textContent = tokensToDisplay(d.top);
+
+        const bottom = document.createElement('div');
+        bottom.className = 'domino-bottom';
+        bottom.textContent = tokensToDisplay(d.bottom);
+
+        el.appendChild(top);
+        el.appendChild(bottom);
+
+        // Drag from palette
+        el.addEventListener('dragstart', (ev) => {
+          ev.dataTransfer.setData('text/plain', 'palette:' + String(i));
+          highlightTransitionFromDominoIndex(i);
+        });
+
+        el.addEventListener('dragend', () => {
+          clearTransitionHighlight();
+        });
+
+        // Highlight on click/hover
+        el.addEventListener('mousedown', () => {
+          highlightTransitionFromDominoIndex(i);
+        });
+        el.addEventListener('mouseup', () => {
+          clearTransitionHighlight();
+        });
+        el.addEventListener('mouseleave', () => {
+          clearTransitionHighlight();
+        });
+
+        // NEW: double-click from palette → append to end of workspace
+        el.addEventListener('dblclick', () => {
+          const workspace = document.getElementById('workspace');
+          if (!workspace) return;
+          const newTile = createWorkspaceTile(i);
+          workspace.appendChild(newTile);
+          concatWorkspaceStrings();
+        });
+
+        list.appendChild(el);
+      }
+
+      group.appendChild(list);
+      palette.appendChild(group);
+    });
+  }
+
+
+  function createWorkspaceTile(idx, fixed = false) {
+    const workspace = document.getElementById('workspace');
+    const d = currentDominoes[idx];
+
+    const tile = document.createElement('div');
+    tile.className = 'domino step-' + d.step;
+    tile.dataset.dominoIndex = String(idx);
+    tile.title = d.info;
+
+    const top = document.createElement('div');
+    top.className = 'domino-top';
+    top.textContent = tokensToDisplay(d.top);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'domino-bottom';
+    bottom.textContent = tokensToDisplay(d.bottom);
+
+    tile.appendChild(top);
+    tile.appendChild(bottom);
+
+    if (fixed) {
+      tile.dataset.fixed = "true";
+      tile.draggable = false;
+    } else {
+      tile.draggable = true;
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'delete-btn';
+      delBtn.textContent = '×';
+      delBtn.title = 'Remove this tile';
+
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        tile.remove();
+        concatWorkspaceStrings();
+      });
+
+      tile.appendChild(delBtn);
+
+      tile.addEventListener('dragstart', (ev) => {
+        const children = Array.from(workspace.children);
+        const fromIndex = children.indexOf(tile);
+        ev.dataTransfer.setData('text/plain', 'workspace:' + fromIndex);
+        highlightTransitionFromDominoIndex(parseInt(tile.dataset.dominoIndex, 10));
+      });
+
+      tile.addEventListener('dragend', () => {
+        clearTransitionHighlight();
+      });
+
+      tile.addEventListener('mousedown', () => {
+        highlightTransitionFromDominoIndex(parseInt(tile.dataset.dominoIndex, 10));
+      });
+      tile.addEventListener('mouseup', () => {
+        clearTransitionHighlight();
+      });
+      tile.addEventListener('mouseleave', () => {
+        clearTransitionHighlight();
+      });
+    }
+
+    return tile;
+  }
+
+  function concatWorkspaceStrings() {
+    const workspace = document.getElementById('workspace');
+    const children = Array.from(workspace.querySelectorAll('.domino'));
+
+    const topSeq = [];
+    const bottomSeq = [];
+
+    for (const ch of children) {
+      const idx = parseInt(ch.dataset.dominoIndex, 10);
+      const d = currentDominoes[idx];
+      const step = d.step;
+      for (const sym of d.top) {
+        topSeq.push({ sym, step });
+      }
+      for (const sym of d.bottom) {
+        bottomSeq.push({ sym, step });
+      }
+    }
+
+    const concatDiv = document.getElementById('concatStrings');
+    if (children.length === 0) {
+      concatDiv.innerHTML = "";
+      return;
+    }
+
+    // Determine max symbol width
+    const allSeq = topSeq.concat(bottomSeq);
+    const maxLen = allSeq.reduce(
+      (m, t) => Math.max(m, String(t.sym).length),
+      1
+    );
+    const symbolWidth = (maxLen + 1) + 'ch';
+    concatDiv.style.setProperty('--sym-width', symbolWidth);
+
+    function seqToHTML(seq) {
+      return seq.map(t => {
+        const cls = `concat-symbol step-text-${t.step}`;
+        const safeSym = String(t.sym)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+        return `<span class="${cls}">${safeSym}</span>`;
+      }).join("");
+    }
+
+    const topHTML = seqToHTML(topSeq);
+    const bottomHTML = seqToHTML(bottomSeq);
+
+    const equal =
+      topSeq.map(t => t.sym).join("|") ===
+      bottomSeq.map(t => t.sym).join("|");
+
+    const labelTop = `<span class="concat-label">${t("concat.top")}</span>`;
+    const labelBottom = `<span class="concat-label">${t("concat.bottom")}</span>`;
+
+    // NEW: Split into scrollable + fixed status block
+    concatDiv.innerHTML = `
+      <div class="concat-scroll-area">
+        ${labelTop}${topHTML}<br>
+        ${labelBottom}${bottomHTML}
+      </div>
+      <div class="concat-status-area">
+        ${
+          equal
+            ? `<span class="equal">${t("concat.equal")}</span>`
+            : `<span class="not-equal">${t("concat.diff")}</span>`
+        }
+      </div>
+    `;
+  }
+
+
+
+  function setupWorkspaceDnD() {
+    const workspace = document.getElementById('workspace');
+
+    workspace.addEventListener('dragover', (ev) => {
+      ev.preventDefault();
+      workspace.classList.add('dragover');
+    });
+
+    workspace.addEventListener('dragleave', () => {
+      workspace.classList.remove('dragover');
+    });
+
+    workspace.addEventListener('drop', (ev) => {
+      ev.preventDefault();
+      workspace.classList.remove('dragover');
+
+      const data = ev.dataTransfer.getData('text/plain');
+      if (!data) return;
+      const [src, idxStr] = data.split(':');
+      const workspaceChildren = Array.from(workspace.children);
+
+      let targetTile = ev.target.closest('.domino');
+      if (targetTile && targetTile.parentElement !== workspace) {
+        targetTile = null;
+      }
+
+      if (src === 'palette') {
+        const idx = parseInt(idxStr, 10);
+        if (isNaN(idx)) return;
+        const newTile = createWorkspaceTile(idx);
+
+        if (!targetTile) {
+          workspace.appendChild(newTile);
+        } else {
+          const rect = targetTile.getBoundingClientRect();
+          let before = ev.clientX < rect.left + rect.width / 2;
+
+          if (targetTile.dataset.fixed === "true" && before) {
+            before = false;
+          }
+
+          if (before) {
+            workspace.insertBefore(newTile, targetTile);
+          } else {
+            workspace.insertBefore(newTile, targetTile.nextSibling);
+          }
+        }
+      } else if (src === 'workspace') {
+        const fromIndex = parseInt(idxStr, 10);
+        if (isNaN(fromIndex)) return;
+        const dragged = workspaceChildren[fromIndex];
+        if (!dragged) return;
+
+        if (!targetTile || targetTile === dragged) {
+          workspace.appendChild(dragged);
+        } else {
+          const rect = targetTile.getBoundingClientRect();
+          let before = ev.clientX < rect.left + rect.width / 2;
+
+          if (targetTile.dataset.fixed === "true" && before) {
+            before = false;
+          }
+
+          if (before) {
+            workspace.insertBefore(dragged, targetTile);
+          } else {
+            workspace.insertBefore(dragged, targetTile.nextSibling);
+          }
+        }
+      }
+
+      concatWorkspaceStrings();
+    });
+  }
+
+  function setupSplitter() {
+    const container = document.querySelector('.split-container');
+    const leftPane = document.getElementById('leftPane');
+    const rightPane = document.getElementById('rightPane');
+    const divider = document.getElementById('divider');
+
+    if (!container || !leftPane || !rightPane || !divider) return;
+
+    let isDragging = false;
+
+    divider.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      document.body.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+
+      const rect = container.getBoundingClientRect();
+      let offsetX = e.clientX - rect.left;
+
+      const min = 200;
+      const max = rect.width - 200;
+      if (offsetX < min) offsetX = min;
+      if (offsetX > max) offsetX = max;
+
+      const leftPercent = (offsetX / rect.width) * 100;
+      const rightPercent = 100 - leftPercent;
+
+      leftPane.style.flex = `0 0 ${leftPercent}%`;
+      rightPane.style.flex = `0 0 ${rightPercent}%`;
+    });
+  }
+
+  function computeUsedSymbols(dominos) {
+    const used = new Set();
+    for (const d of dominos) {
+      for (const t of d.top) used.add(t);
+      for (const t of d.bottom) used.add(t);
+    }
+    return used;
+  }
+
+  function starPrefix(seq, star) {
+    const res = [];
+    for (const s of seq) {
+      res.push(star, s);
+    }
+    return res;
+  }
+
+  function starSuffix(seq, star) {
+    const res = [];
+    for (const s of seq) {
+      res.push(s, star);
+    }
+    return res;
+  }
+
+  function starBoth(seq, star) {
+    const res = [star];
+    for (const s of seq) {
+      res.push(s, star);
+    }
+    return res;
+  }
+
+  function transformMPCPtoPCP(mpcpDominoes) {
+    if (!mpcpDominoes || mpcpDominoes.length === 0) return [];
+
+    const used = computeUsedSymbols(mpcpDominoes);
+    const starSym = chooseFreshSymbol("*", used);
+    used.add(starSym);
+    const diamondSym = chooseFreshSymbol("⋄", used);
+
+    const PCP = [];
+
+    const first = mpcpDominoes[0];
+    const t1 = first.top;
+    const b1 = first.bottom;
+    const s1 = first.step;
+
+    const firstSrcQ = first.srcQ || null;
+    const firstSrcA = first.srcA || null;
+
+    PCP.push({
+      top: starPrefix(t1, starSym),
+      bottom: starBoth(b1, starSym),
+      info: "PCP (from Step " + s1 + "): forcing first tile (⋆t₁ / ⋆b₁⋆)",
+      step: s1,
+      srcQ: firstSrcQ,
+      srcA: firstSrcA
+    });
+
+    PCP.push({
+      top: starPrefix(t1, starSym),
+      bottom: starSuffix(b1, starSym),
+      info: "PCP (from Step " + s1 + "): continuation (⋆t₁ / b₁⋆)",
+      step: s1,
+      srcQ: firstSrcQ,
+      srcA: firstSrcA
+    });
+
+    for (let i = 1; i < mpcpDominoes.length; i++) {
+      const d = mpcpDominoes[i];
+
+      PCP.push({
+        top: starPrefix(d.top, starSym),
+        bottom: starSuffix(d.bottom, starSym),
+        info: "PCP (from Step " + d.step + "): tile from MPCP index " + (i + 1),
+        step: d.step,
+        srcQ: d.srcQ || null,
+        srcA: d.srcA || null
+      });
+    }
+
+    PCP.push({
+      top: [starSym, diamondSym],
+      bottom: [diamondSym],
+      info: "PCP: closing tile " + starSym + diamondSym + "/" + diamondSym,
+      step: 8
+    });
+
+    return PCP;
+  }
+
+  function updateDominoView() {
+    const toggle = document.getElementById('toggleMPCP');
+    const usePCP = toggle && toggle.checked;
+
+    clearTransitionHighlight();
+
+    if (!mpcpDominoes || mpcpDominoes.length === 0) {
+      currentDominoes = [];
+      renderDominoPalette([]);
+      document.getElementById('workspace').innerHTML = "";
+      concatWorkspaceStrings();
+      setStatusFromKey("status.no_mpcp");
+      return;
+    }
+
+    const N = mpcpDominoes.length;
+
+    if (usePCP) {
+      currentDominoes = transformMPCPtoPCP(mpcpDominoes);
+      const K = currentDominoes.length;
+      setStatusFromKey("status.pcp_shown", { K, N });
+    } else {
+      currentDominoes = mpcpDominoes.slice();
+      setStatusFromKey("status.mpcp_shown", { N });
+    }
+
+
+    renderDominoPalette(currentDominoes);
+
+    const workspace = document.getElementById('workspace');
+    workspace.innerHTML = "";
+
+    if (usePCP) {
+      concatWorkspaceStrings();
+    } else {
+      if (currentDominoes.length > 0) {
+        const fixedTile = createWorkspaceTile(0, true);
+        workspace.appendChild(fixedTile);
+      }
+      concatWorkspaceStrings();
+    }
+  }
+
+  document.getElementById('mtFile').addEventListener('change', (ev) => {
+    const file = ev.target.files[0];
+    if (!file) {
+      currentTM = null;
+      mpcpDominoes = [];
+      currentDominoes = [];
+      renderTMInfo(null);
+      renderDominoPalette([]);
+      document.getElementById('workspace').innerHTML = "";
+      concatWorkspaceStrings();
+      setStatusFromKey(null); // clear status and its key
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+    try {
+      currentTM = parseMt(e.target.result);
+      renderTMInfo(currentTM);
+      setStatusFromKey("status.tm_parsed_ok");
+    } catch (err) {
+      console.error(err);
+      setStatusFromKey("status.parse_error", { ERR: err.message }, true);
+      currentTM = null;
+      renderTMInfo(null);
+    }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    if (!currentTM) {
+      setStatusFromKey("status.need_mt", {}, true);
+      return;
+    }
+    const w = document.getElementById('inputWord').value || "";
+    try {
+      mpcpDominoes = buildDominoes(currentTM, w);
+      updateDominoView(); // this will call setStatusFromKey for MPCP/PCP status
+    } catch (err) {
+      console.error(err);
+      setStatusFromKey("status.gen_error", { ERR: err.message }, true);
+    }
+  });
+
+  document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
+    const workspace = document.getElementById('workspace');
+    const usePCP = document.getElementById('toggleMPCP')?.checked;
+
+    if (usePCP) {
+      workspace.innerHTML = "";
+    } else {
+      const children = Array.from(workspace.children);
+      const fixed = children.find(ch => ch.dataset && ch.dataset.fixed === "true");
+      workspace.innerHTML = "";
+      if (fixed) {
+        workspace.appendChild(fixed);
+      }
+    }
+    concatWorkspaceStrings();
+  });
+
+  document.getElementById('toggleMPCP').addEventListener('change', () => {
+    if (!mpcpDominoes || mpcpDominoes.length === 0) {
+      return;
+    }
+    updateDominoView();
+  });
+
+  document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+    toggleDarkMode(e.target.checked);
+    const st = document.getElementById('status').textContent;
+    if (st) showStatus(st);
+  });
+
+  const langToggle = document.getElementById("langToggle");
+  if (langToggle) {
+    langToggle.addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".lang-btn");
+      if (!btn) return;
+      const lang = btn.getAttribute("data-lang");
+
+      // 1) Switch language (updates all data-i18n elements)
+      setLanguage(lang);
+
+      // 2) Re-render parsed TM info (uses t(...))
+      renderTMInfo(currentTM);
+
+      // 3) Re-render ONLY the palette headers and Top/Bottom text,
+      //    without touching the current sequence in the workspace.
+      if (currentDominoes && currentDominoes.length > 0) {
+        // Palette headers (Step / Etapa) depend on language and MPCP ⇒ PCP toggle
+        renderDominoPalette(currentDominoes);
+        // Top / Bottom / equality message depend on language
+        concatWorkspaceStrings();
+      }
+    });
+  }
+
+
+
+  setupWorkspaceDnD();
+  applyDarkModeFromStorage();
+  setupSplitter();
+  initLanguageFromStorage();
+
+  // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
+  const concatDiv = document.getElementById('concatStrings');
+  const wrapToggle = document.getElementById('wrapToggle');
+
+  // default preference = wrap
+  let wrapPref = true;
+  try {
+    const saved = localStorage.getItem('tm2pcp-wrap-mode');
+    if (saved === 'scroll') {
+      wrapPref = false;
+    } else if (saved === 'wrap') {
+      wrapPref = true;
+    }
+  } catch (e) {
+    // if localStorage fails, keep default
+  }
+
+  if (concatDiv) {
+    if (wrapPref) {
+      concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
+    } else {
+      concatDiv.style.setProperty('--concat-whitespace', 'pre');
+    }
+  }
+
+  if (wrapToggle && concatDiv) {
+    // Ensure checkbox matches the actual behavior
+    wrapToggle.checked = wrapPref;
+
+    wrapToggle.addEventListener('change', (e) => {
+      const wrap = e.target.checked;
+      if (wrap) {
+          concatDiv.style.setProperty('--concat-whitespace', 'pre-wrap');
+
+        try {
+          localStorage.setItem('tm2pcp-wrap-mode', 'wrap');
+        } catch (err) {}
+      } else {
+          concatDiv.style.setProperty('--concat-whitespace', 'pre');
+
+        try {
+          localStorage.setItem('tm2pcp-wrap-mode', 'scroll');
+        } catch (err) {}
+      }
+    });
+  }
+
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Footer year (with failsafe)
+    const el = document.getElementById('footer-year');
+    if (el) {
+      let year = 2025;
+      try {
+        const d = new Date();
+        const y = d.getFullYear();
+        if (typeof y === "number" && !isNaN(y) && y > 1900 && y < 3000) {
+          year = y;
+        }
+      } catch (e) {}
+      el.textContent = year;
+    }
+
+    // Hide transition table label until a TM is loaded
+    const lbl = document.getElementById('tmTableLabel');
+    if (lbl) {
+      lbl.style.display = "none";
+    }
+  });
+
+
+</script>
+
+<footer class="app-footer">
+  <div class="footer-inner">
+    <div>
+      © <span id="footer-year"></span>
+      <a href="https://brunogrisci.github.io/" target="_blank">Prof. Bruno Iochins Grisci</a>
+      — Departamento de Informática Teórica,
+      <a href="https://www.inf.ufrgs.br/site/" target="_blank">Instituto de Informática</a>,
+      <a href="https://www.ufrgs.br/site/" target="_blank">UFRGS</a>.
+    </div>
+    <div>
+      <span data-i18n="footer.code_label">Code on GitHub:</span>
+      <a href="https://github.com/BrunoGrisci/tm2pcp-webtool" target="_blank">
+        brunogrisci/tm2pcp-webtool
+      </a>
+      —
+      <span data-i18n="footer.licensed_label">Licensed under</span>
+      <a href="https://github.com/BrunoGrisci/tm2pcp-webtool/blob/main/LICENSE" target="_blank">
+        MIT License
+      </a>.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

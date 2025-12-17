@@ -15,6 +15,8 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
 
 🔗 **Repositório no GitHub:** https://github.com/brunogrisci/tm2pcp-webtool
 
+![Visão geral da ferramenta tm2pcp-webtool](docs/screenshots/overview.png)
+
 ---
 
 ## ✨ Funcionalidades
@@ -37,6 +39,8 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
   - Símbolo em branco exibido como a **última coluna**
   - Destaque da transição correspondente ao selecionar um dominó
 
+![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
+
 ---
 
 ### Suporte a MPCP / PCP
@@ -47,6 +51,8 @@ A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitin
   - Transições brutas presentes no arquivo `.mt`
   - Transições distintas efetivamente utilizadas pela máquina
 - Tratamento correto de múltiplos estados de aceitação e rejeição implícita
+
+![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
 
 ---
 
@@ -173,4 +179,17 @@ Consulte o arquivo `LICENSE` para mais detalhes.
 ---
 
 Se você utilizar esta ferramenta em ensino ou pesquisa, uma citação ou link para o repositório será muito bem-vindo.
+
+## 📚 Citação
+
+Se você utilizar esta ferramenta em trabalhos acadêmicos (artigos, teses, dissertações, relatórios técnicos ou material didático), por favor cite:
+
+```bibtex
+@software{Grisci_tm2pcp_webtool,
+  author       = {Bruno Iochins Grisci},
+  title        = {{tm2pcp-webtool}: Uma Ferramenta Interativa para Reduções de Máquinas de Turing para (M)PCP},
+  year         = {2025},
+  url          = {https://github.com/brunogrisci/tm2pcp-webtool},
+  note         = {Software educacional baseado na web},
+}
 

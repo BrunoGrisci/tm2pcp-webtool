@@ -14,6 +14,8 @@ The tool is designed for teaching **Theory of Computation**, allowing students t
 
 🔗 **GitHub repository:** https://github.com/brunogrisci/tm2pcp-webtool
 
+![Overview of the tm2pcp-webtool](docs/screenshots/overview.png)
+
 ---
 
 ## ✨ Features
@@ -36,6 +38,8 @@ The tool is designed for teaching **Theory of Computation**, allowing students t
   - Blank symbol shown as the **last column**
   - Highlighting of the relevant transition when a domino is selected
 
+  ![Transformação de MPCP para PCP](docs/gifs/mpcp_to_pcp.gif)
+
 ---
 
 ### MPCP / PCP support
@@ -46,6 +50,8 @@ The tool is designed for teaching **Theory of Computation**, allowing students t
   - Raw transitions in the `.mt` file
   - Distinct transitions used by the machine
 - Correct handling of multiple accepting states and implicit rejection
+
+![MPCP to PCP transformation](docs/gifs/mpcp_to_pcp.gif)
 
 ---
 
@@ -172,3 +178,16 @@ See the `LICENSE` file for details.
 ---
 
 If you use this tool in teaching or research, a citation or link back to the repository is greatly appreciated.
+
+## 📚 Citation
+
+If you use this tool in academic work (papers, theses, technical reports, or teaching material), please cite it as:
+
+```bibtex
+@software{Grisci_tm2pcp_webtool,
+  author       = {Bruno Iochins Grisci},
+  title        = {{tm2pcp-webtool}: An Interactive Tool for Reductions from Turing Machines to (M)PCP},
+  year         = {2025},
+  url          = {https://github.com/brunogrisci/tm2pcp-webtool},
+  note         = {Educational web-based software},
+}

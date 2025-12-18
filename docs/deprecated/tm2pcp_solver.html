@@ -489,59 +489,6 @@
       border-color: var(--panel-border);
       border-radius: 0.25rem;
     }
-
-    /* Top bar: controls on the right */
-    .topbar {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .topbar .spacer {
-      flex: 1 1 auto;
-    }
-
-    /* Right corner controls */
-    .top-right-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-left: auto;
-    }
-
-    /* Icon switch buttons (sun/moon, flags) */
-    .icon-switch {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.35rem;
-      padding: 0.25rem 0.5rem;
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      color: var(--fg);
-      border-radius: 999px;
-      cursor: pointer;
-      user-select: none;
-      font-size: 1rem;
-      line-height: 1;
-    }
-
-    .icon-switch:hover {
-      background: #f3f3f3;
-    }
-    body.dark-mode .icon-switch:hover {
-      background: #1f2937;
-    }
-
-    .icon-switch .icon {
-      font-size: 1.05rem;
-    }
-
-    .icon-switch[aria-pressed="true"] {
-      box-shadow: 0 0 0 2px rgba(59,130,246,0.35);
-    }
-
-
   </style>
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -607,33 +554,25 @@
     <label for="inputWord"><span data-i18n="label.input_word">Input word w:</span> </label>
     <input type="text" id="inputWord" placeholder="e.g., ()">
   </div>
-  <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+  <div>
     <button id="generateBtn" data-i18n="label.generate_btn">Generate dominoes</button>
-
-    <button id="exportCsvBtn" data-i18n="button.export_csv" title="">
-      Export CSV
-    </button>
-
-    <!-- MPCP/PCP toggle now here -->
-    <label style="font-weight:400; cursor:pointer; display:flex; align-items:center; gap:0.35rem;">
+  </div>
+  <div style="display:flex; align-items:center; gap:0.6rem; margin-left:auto;">
+    <label style="font-weight:400; cursor:pointer;">
       <input type="checkbox" id="toggleMPCP">
       <span data-i18n="label.mpcp_to_pcp">MPCP ⇒ PCP</span>
     </label>
+
+    <label style="font-weight:400; cursor:pointer;">
+      <input type="checkbox" id="darkModeToggle">
+      <span data-i18n="label.dark_mode">Dark mode</span>
+    </label>
+
+    <div id="langToggle" style="display:flex; gap:0.25rem;">
+      <button type="button" class="lang-btn" data-lang="en" aria-label="English">🇬🇧</button>
+      <button type="button" class="lang-btn" data-lang="pt-BR" aria-label="Português do Brasil">🇧🇷</button>
+    </div>
   </div>
-
-  <div class="top-right-controls" style="margin-left:auto;">
-    <!-- Dark mode icon switch -->
-    <button type="button" id="darkModeSwitch" class="icon-switch" aria-pressed="false">
-      <span id="darkModeIcon" class="icon">☀️</span>
-    </button>
-
-    <!-- Language icon switch -->
-    <button type="button" id="langSwitch" class="icon-switch" aria-pressed="false">
-      <span id="langIcon" class="icon">🇬🇧</span>
-    </button>
-  </div>
-
-
 </div>
 
 <div class="tm-summary">
@@ -721,7 +660,7 @@
 </div>
 
 <!-- Load i18n logic -->
-<script src="tm2pcp_i18n.js"></script>
+<script src="tm2pcp_i18n_solver.js"></script>
 
 <script>
   // Debug: if this triggers, the i18n file did not load
@@ -815,7 +754,8 @@
     const saved = localStorage.getItem('tm2pcp-dark-mode');
     const isDark = saved === 'true';
     document.body.classList.toggle('dark-mode', isDark);
-    refreshDarkModeSwitchUI();
+    const chk = document.getElementById('darkModeToggle');
+    if (chk) chk.checked = isDark;
   }
 
   function toggleDarkMode(enabled) {
@@ -1305,36 +1245,6 @@
     return tokens.join(" ");
   }
 
-  function csvEscape(value) {
-    const s = String(value ?? "");
-    // Escape quotes and wrap if needed
-    if (/[",\n\r]/.test(s)) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
-  }
-
-  function dominoTokensToCsvString(tokens) {
-    // Use the same representation as the UI (space-separated symbols)
-    // This avoids ambiguity when symbols have multiple characters.
-    return (tokens || []).join(" ");
-  }
-
-  function downloadTextFile(filename, content, mime = "text/csv;charset=utf-8") {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    URL.revokeObjectURL(url);
-  }
-
-
   function renderDominoPalette(dominos) {
     const palette = document.getElementById('dominoPalette');
     palette.innerHTML = "";
@@ -1637,12 +1547,6 @@
     });
   }
 
-  function refreshTooltips() {
-    const exportBtn = document.getElementById("exportCsvBtn");
-    if (exportBtn) exportBtn.title = t("tooltip.export_csv");
-  }
-
-
   function setupSplitter() {
     const container = document.querySelector('.split-container');
     const leftPane = document.getElementById('leftPane');
@@ -1902,29 +1806,6 @@
   });
 
 
-  document.getElementById('exportCsvBtn').addEventListener('click', () => {
-    // Export the currently displayed set (MPCP or PCP depending on toggle)
-    if (!currentDominoes || currentDominoes.length === 0) {
-      setStatusFromKey("status.export_none", {}, true);
-      return;
-    }
-
-    const usePCP = document.getElementById('toggleMPCP')?.checked;
-    const filename = usePCP ? "pcp_dominoes.csv" : "mpcp_dominoes.csv";
-
-    let csv = "domino_id,top_string,bottom_string\n";
-    for (let i = 0; i < currentDominoes.length; i++) {
-      const d = currentDominoes[i];
-      const topStr = dominoTokensToCsvString(d.top);
-      const bottomStr = dominoTokensToCsvString(d.bottom);
-      csv += `${i+1},${csvEscape(topStr)},${csvEscape(bottomStr)}\n`;
-    }
-
-    downloadTextFile(filename, csv);
-    setStatusFromKey("status.export_ok", { N: currentDominoes.length, FILE: filename }, false);
-  });
-
-
   document.getElementById('clearWorkspaceBtn').addEventListener('click', () => {
     const workspace = document.getElementById('workspace');
     const usePCP = document.getElementById('toggleMPCP')?.checked;
@@ -1949,83 +1830,43 @@
     updateDominoView();
   });
 
-  function getCurrentLang() {
-    // i18n.js typically persists language; try localStorage first, fallback to <html lang>
-    const saved = localStorage.getItem('tm2pcp-lang');
-    if (saved) return saved;
-    return document.documentElement.lang || 'en';
-  }
+  document.getElementById('darkModeToggle').addEventListener('change', (e) => {
+    toggleDarkMode(e.target.checked);
+    const st = document.getElementById('status').textContent;
+    if (st) showStatus(st);
+  });
 
-  function setCurrentLang(lang) {
-    // keep consistent with your i18n.js persistence
-    localStorage.setItem('tm2pcp-lang', lang);
-  }
+  const langToggle = document.getElementById("langToggle");
+  if (langToggle) {
+    langToggle.addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".lang-btn");
+      if (!btn) return;
+      const lang = btn.getAttribute("data-lang");
 
-  function refreshLangSwitchUI() {
-    const lang = getCurrentLang();
-    const btn = document.getElementById('langSwitch');
-    const icon = document.getElementById('langIcon');
-    if (!btn || !icon) return;
+      // 1) Switch language (updates all data-i18n elements)
+      setLanguage(lang);
 
-    const isPT = (lang === 'pt-BR');
-    btn.setAttribute('aria-pressed', isPT ? 'true' : 'false');
-    icon.textContent = isPT ? '🇧🇷' : '🇬🇧';
-  }
-
-  const langBtn = document.getElementById('langSwitch');
-  if (langBtn) {
-    langBtn.addEventListener('click', () => {
-      const cur = getCurrentLang();
-      const next = (cur === 'pt-BR') ? 'en' : 'pt-BR';
-
-      setLanguage(next);       // your existing i18n.js function
-      setCurrentLang(next);    // keep a simple stored value for UI
-      refreshLangSwitchUI();
-      refreshTooltips();
-
-      // re-render text-dependent areas without clearing workspace
+      // 2) Re-render parsed TM info (uses t(...))
       renderTMInfo(currentTM);
+
+      // 3) Re-render ONLY the palette headers and Top/Bottom text,
+      //    without touching the current sequence in the workspace.
       if (currentDominoes && currentDominoes.length > 0) {
+        // Palette headers (Step / Etapa) depend on language and MPCP ⇒ PCP toggle
         renderDominoPalette(currentDominoes);
+        // Top / Bottom / equality message depend on language
         concatWorkspaceStrings();
       }
     });
   }
 
-  function refreshDarkModeSwitchUI() {
-    const isDark = document.body.classList.contains('dark-mode');
-    const btn = document.getElementById('darkModeSwitch');
-    const icon = document.getElementById('darkModeIcon');
-    if (!btn || !icon) return;
-
-    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-    icon.textContent = isDark ? '🌙' : '☀️';
-  }
-
-  const darkBtn = document.getElementById('darkModeSwitch');
-  if (darkBtn) {
-    darkBtn.addEventListener('click', () => {
-      const isDark = !document.body.classList.contains('dark-mode');
-      toggleDarkMode(isDark);
-      refreshDarkModeSwitchUI();
-
-      // keep status color consistent
-      const st = document.getElementById('status').textContent;
-      if (st) showStatus(st);
-    });
-  }
 
 
 
   // -----------------------------
   // PCP solver (bounded) in a Web Worker
   // -----------------------------
-  function parsePositiveInt(str, fallback) {
-      const n = parseInt(String(str || "").trim(), 10);
-      return Number.isFinite(n) && n >= 0 ? n : fallback;
-    }
-
-    let solverWorker = null;
+  let solverWorker = null;
   let solverWorkerUrl = null;
   let lastSolverSolution = null; // array of domino indices (0-based) for currentDominoes
 
@@ -2219,170 +2060,164 @@
     return Number.isFinite(n) && n >= 0 ? n : fallback;
   }
 
-  
+  function setSolverUIRunning(running) {
+    const solveBtn = document.getElementById("solveBtn");
+    const cancelBtn = document.getElementById("cancelSolveBtn");
+    const loadBtn = document.getElementById("loadSolutionBtn");
 
-function setSolverUIRunning(running) {
-      const solveBtn = document.getElementById("solveBtn");
-      const cancelBtn = document.getElementById("cancelSolveBtn");
-      const loadBtn = document.getElementById("loadSolutionBtn");
+    if (solveBtn) solveBtn.disabled = running;
+    if (cancelBtn) cancelBtn.disabled = !running;
+    if (loadBtn) loadBtn.disabled = running || !lastSolverSolution;
+  }
 
-      if (solveBtn) solveBtn.disabled = running;
-      if (cancelBtn) cancelBtn.disabled = !running;
-      if (loadBtn) loadBtn.disabled = running || !lastSolverSolution;
+  function setSolverProgressText(txt) {
+    const el = document.getElementById("solverProgress");
+    if (el) el.textContent = txt || "";
+  }
+
+  function setSolverResultText(txt) {
+    const el = document.getElementById("solverResult");
+    if (el) el.textContent = txt || "";
+  }
+
+  function startSolver() {
+    if (!currentDominoes || currentDominoes.length === 0) {
+      setStatusFromKey("solver.status.need_dominoes", {}, true);
+      return;
     }
 
-    function setSolverProgressText(txt) {
-      const el = document.getElementById("solverProgress");
-      if (el) el.textContent = txt || "";
-    }
+    const depth = parsePositiveInt(document.getElementById("solverDepth")?.value, 20);
+    const timeLimit = parsePositiveInt(document.getElementById("solverTime")?.value, 1500);
+    const nodeLimit = parsePositiveInt(document.getElementById("solverNodes")?.value, 200000);
 
-    function setSolverResultText(txt) {
-      const el = document.getElementById("solverResult");
-      if (el) el.textContent = txt || "";
-    }
+    const usePCP = document.getElementById("toggleMPCP")?.checked;
+    const forceFirst = !usePCP; // in MPCP mode, first domino must be used first
 
-    function startSolver() {
-      if (!currentDominoes || currentDominoes.length === 0) {
-        setStatusFromKey("solver.status.need_dominoes", {}, true);
+    // Build worker input dominoes (token arrays)
+    const dominosPayload = currentDominoes.map(d => ({
+      top: (d.top || []).map(String),
+      bottom: (d.bottom || []).map(String),
+    }));
+
+    lastSolverSolution = null;
+    setSolverUIRunning(true);
+    setSolverProgressText(t("solver.status.running"));
+    setSolverResultText("");
+
+    const worker = ensureSolverWorker();
+
+    worker.onmessage = (ev) => {
+      const msg = ev.data || {};
+      if (msg.type === "progress") {
+        const nodes = msg.nodes || 0;
+        const depthLimit = msg.depthLimit || 0;
+        const best = (msg.bestSuffixLen != null && msg.bestSuffixLen !== Infinity) ? msg.bestSuffixLen : "–";
+        setSolverProgressText(t("solver.status.progress", { N: nodes, D: depthLimit, B: best }));
         return;
       }
-
-      const depth = parsePositiveInt(document.getElementById("solverDepth")?.value, 20);
-      const timeLimit = parsePositiveInt(document.getElementById("solverTime")?.value, 1500);
-      const nodeLimit = parsePositiveInt(document.getElementById("solverNodes")?.value, 200000);
-
-      const usePCP = document.getElementById("toggleMPCP")?.checked;
-      const forceFirst = !usePCP; // in MPCP mode, first domino must be used first
-
-      // Build worker input dominoes (token arrays)
-      const dominosPayload = currentDominoes.map(d => ({
-        top: (d.top || []).map(String),
-        bottom: (d.bottom || []).map(String),
-      }));
-
-      lastSolverSolution = null;
-      setSolverUIRunning(true);
-      setSolverProgressText(t("solver.status.running"));
-      setSolverResultText("");
-
-      const worker = ensureSolverWorker();
-
-      worker.onmessage = (ev) => {
-        const msg = ev.data || {};
-        if (msg.type === "progress") {
-          const nodes = msg.nodes || 0;
-          const depthLimit = msg.depthLimit || 0;
-          const best = (msg.bestSuffixLen != null && msg.bestSuffixLen !== Infinity) ? msg.bestSuffixLen : "–";
-          setSolverProgressText(t("solver.status.progress", { N: nodes, D: depthLimit, B: best }));
-          return;
-        }
-        if (msg.type === "error") {
-          setSolverUIRunning(false);
-          setSolverProgressText("");
-          setStatusFromKey("solver.status.error", { ERR: msg.error || "Unknown error" }, true);
-          terminateSolverWorker();
-          return;
-        }
-        if (msg.type === "done") {
-          const res = msg.result || {};
-          setSolverUIRunning(false);
-
-          const nodes = res.nodes ?? 0;
-          const ms = res.ms ?? 0;
-
-          if (res.status === "found" && Array.isArray(res.solution)) {
-            lastSolverSolution = res.solution.slice();
-
-            const seq1 = lastSolverSolution.map(i => i + 1).join(", ");
-            setSolverResultText(
-              t("solver.result.found", { SEQ: seq1, LEN: lastSolverSolution.length, N: nodes, MS: ms })
-            );
-
-            setStatusFromKey("solver.status.found", { LEN: lastSolverSolution.length }, false);
-          } else {
-            lastSolverSolution = null;
-            let key = "solver.result.notfound";
-            if (res.status === "timeout") key = "solver.result.timeout";
-            else if (res.status === "nodelimit") key = "solver.result.nodelimit";
-            else if (res.status === "cancelled") key = "solver.result.cancelled";
-
-            setSolverResultText(t(key, { N: nodes, MS: ms }));
-            setStatusFromKey("solver.status.done", {}, false);
-          }
-
-          setSolverProgressText("");
-          // Update load button
-          const loadBtn = document.getElementById("loadSolutionBtn");
-          if (loadBtn) loadBtn.disabled = !lastSolverSolution;
-
-          // keep worker alive for next run (faster); do not terminate here
-          return;
-        }
-      };
-
-      worker.postMessage({
-        type: "start",
-        dominos: dominosPayload,
-        opts: {
-          maxDepth: depth,
-          timeLimitMs: timeLimit,
-          nodeLimit: nodeLimit,
-          maxSuffixLen: 400, // safety valve; can be made UI later
-          forceFirst: forceFirst
-        }
-      });
-    }
-
-    function cancelSolver() {
-      if (!solverWorker) return;
-      solverWorker.postMessage({ type: "cancel" });
-      setSolverUIRunning(false);
-      setSolverProgressText("");
-      setSolverResultText(t("solver.result.cancelled", { N: "–", MS: "–" }));
-      setStatusFromKey("solver.status.cancelled", {}, false);
-      // terminate worker to fully stop CPU
-      terminateSolverWorker();
-    }
-
-    function loadSolverSolutionIntoWorkspace() {
-      if (!lastSolverSolution || !Array.isArray(lastSolverSolution) || lastSolverSolution.length === 0) return;
-
-      const workspace = document.getElementById("workspace");
-      if (!workspace) return;
-
-      const usePCP = document.getElementById("toggleMPCP")?.checked;
-
-      // In MPCP mode, first tile is already fixed in the workspace.
-      // The solver solution is forced to start with 0; skip it when appending.
-      const startIdx = (!usePCP && lastSolverSolution[0] === 0) ? 1 : 0;
-
-      for (let k = startIdx; k < lastSolverSolution.length; k++) {
-        const idx = lastSolverSolution[k];
-        const tile = createWorkspaceTile(idx);
-        workspace.appendChild(tile);
+      if (msg.type === "error") {
+        setSolverUIRunning(false);
+        setSolverProgressText("");
+        setStatusFromKey("solver.status.error", { ERR: msg.error || "Unknown error" }, true);
+        terminateSolverWorker();
+        return;
       }
-      concatWorkspaceStrings();
+      if (msg.type === "done") {
+        const res = msg.result || {};
+        setSolverUIRunning(false);
+
+        const nodes = res.nodes ?? 0;
+        const ms = res.ms ?? 0;
+
+        if (res.status === "found" && Array.isArray(res.solution)) {
+          lastSolverSolution = res.solution.slice();
+
+          const seq1 = lastSolverSolution.map(i => i + 1).join(", ");
+          setSolverResultText(
+            t("solver.result.found", { SEQ: seq1, LEN: lastSolverSolution.length, N: nodes, MS: ms })
+          );
+
+          setStatusFromKey("solver.status.found", { LEN: lastSolverSolution.length }, false);
+        } else {
+          lastSolverSolution = null;
+          let key = "solver.result.notfound";
+          if (res.status === "timeout") key = "solver.result.timeout";
+          else if (res.status === "nodelimit") key = "solver.result.nodelimit";
+          else if (res.status === "cancelled") key = "solver.result.cancelled";
+
+          setSolverResultText(t(key, { N: nodes, MS: ms }));
+          setStatusFromKey("solver.status.done", {}, false);
+        }
+
+        setSolverProgressText("");
+        // Update load button
+        const loadBtn = document.getElementById("loadSolutionBtn");
+        if (loadBtn) loadBtn.disabled = !lastSolverSolution;
+
+        // keep worker alive for next run (faster); do not terminate here
+        return;
+      }
+    };
+
+    worker.postMessage({
+      type: "start",
+      dominos: dominosPayload,
+      opts: {
+        maxDepth: depth,
+        timeLimitMs: timeLimit,
+        nodeLimit: nodeLimit,
+        maxSuffixLen: 400, // safety valve; can be made UI later
+        forceFirst: forceFirst
+      }
+    });
+  }
+
+  function cancelSolver() {
+    if (!solverWorker) return;
+    solverWorker.postMessage({ type: "cancel" });
+    setSolverUIRunning(false);
+    setSolverProgressText("");
+    setSolverResultText(t("solver.result.cancelled", { N: "–", MS: "–" }));
+    setStatusFromKey("solver.status.cancelled", {}, false);
+    // terminate worker to fully stop CPU
+    terminateSolverWorker();
+  }
+
+  function loadSolverSolutionIntoWorkspace() {
+    if (!lastSolverSolution || !Array.isArray(lastSolverSolution) || lastSolverSolution.length === 0) return;
+
+    const workspace = document.getElementById("workspace");
+    if (!workspace) return;
+
+    const usePCP = document.getElementById("toggleMPCP")?.checked;
+
+    // In MPCP mode, first tile is already fixed in the workspace.
+    // The solver solution is forced to start with 0; skip it when appending.
+    const startIdx = (!usePCP && lastSolverSolution[0] === 0) ? 1 : 0;
+
+    for (let k = startIdx; k < lastSolverSolution.length; k++) {
+      const idx = lastSolverSolution[k];
+      const tile = createWorkspaceTile(idx);
+      workspace.appendChild(tile);
     }
+    concatWorkspaceStrings();
+  }
 
-    // Hook up UI events
-    const solveBtnEl = document.getElementById("solveBtn");
-    if (solveBtnEl) solveBtnEl.addEventListener("click", startSolver);
+  // Hook up UI events
+  const solveBtnEl = document.getElementById("solveBtn");
+  if (solveBtnEl) solveBtnEl.addEventListener("click", startSolver);
 
-    const cancelBtnEl = document.getElementById("cancelSolveBtn");
-    if (cancelBtnEl) cancelBtnEl.addEventListener("click", cancelSolver);
+  const cancelBtnEl = document.getElementById("cancelSolveBtn");
+  if (cancelBtnEl) cancelBtnEl.addEventListener("click", cancelSolver);
 
-    const loadBtnEl = document.getElementById("loadSolutionBtn");
-    if (loadBtnEl) loadBtnEl.addEventListener("click", loadSolverSolutionIntoWorkspace);
+  const loadBtnEl = document.getElementById("loadSolutionBtn");
+  if (loadBtnEl) loadBtnEl.addEventListener("click", loadSolverSolutionIntoWorkspace);
+
 
   setupWorkspaceDnD();
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
-  refreshTooltips();
-  refreshDarkModeSwitchUI();
-  refreshLangSwitchUI();
-
-
 
   // Initialize wrap / scroll behavior for Top/Bottom strings with persistence
   const concatDiv = document.getElementById('concatStrings');

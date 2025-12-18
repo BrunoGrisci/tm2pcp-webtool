@@ -658,7 +658,7 @@
     <hr style="margin: 0.9rem 0; border: none; border-top: 1px solid var(--panel-border);">
 
     <div id="solverPanel">
-      <h2 data-i18n="solver.title" style="margin-top:0;">PCP Solver (bounded)</h2>
+      <h2 id="solverTitle" data-i18n="solver.title_mpcp" style="margin-top:0;">MPCP Solver (bounded)</h2>
       <div class="small-note" data-i18n="solver.note">
         PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.
       </div>
@@ -1947,6 +1947,7 @@
       return;
     }
     updateDominoView();
+    updateSolverTitle();
   });
 
   function getCurrentLang() {
@@ -2241,7 +2242,18 @@ function setSolverUIRunning(running) {
       if (el) el.textContent = txt || "";
     }
 
-    function startSolver() {
+    
+    function updateSolverTitle() {
+      const titleEl = document.getElementById("solverTitle");
+      if (!titleEl) return;
+      const usePCP = document.getElementById("toggleMPCP")?.checked;
+      const key = usePCP ? "solver.title_pcp" : "solver.title_mpcp";
+      titleEl.setAttribute("data-i18n", key);
+      if (typeof applyI18n === "function") applyI18n();
+      else titleEl.textContent = usePCP ? "PCP Solver (bounded)" : "MPCP Solver (bounded)";
+    }
+
+function startSolver() {
       if (!currentDominoes || currentDominoes.length === 0) {
         setStatusFromKey("solver.status.need_dominoes", {}, true);
         return;
@@ -2352,6 +2364,16 @@ function setSolverUIRunning(running) {
 
       const usePCP = document.getElementById("toggleMPCP")?.checked;
 
+      // First, clean the workspace before loading the solution
+      if (usePCP) {
+        workspace.innerHTML = "";
+      } else {
+        const children = Array.from(workspace.children);
+        const fixed = children.find(ch => ch.dataset && ch.dataset.fixed === "true");
+        workspace.innerHTML = "";
+        if (fixed) workspace.appendChild(fixed);
+      }
+
       // In MPCP mode, first tile is already fixed in the workspace.
       // The solver solution is forced to start with 0; skip it when appending.
       const startIdx = (!usePCP && lastSolverSolution[0] === 0) ? 1 : 0;
@@ -2378,7 +2400,8 @@ function setSolverUIRunning(running) {
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
-  refreshTooltips();
+    updateSolverTitle();
+refreshTooltips();
   refreshDarkModeSwitchUI();
   refreshLangSwitchUI();
 

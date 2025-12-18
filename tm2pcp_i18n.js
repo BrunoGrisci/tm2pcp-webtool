@@ -18,6 +18,8 @@ const I18N = {
 
     // PCP solver (bounded)
     "solver.title": "PCP Solver (bounded)",
+    "solver.title_pcp": "PCP Solver (bounded)",
+    "solver.title_mpcp": "MPCP Solver (bounded)",
     "solver.note": "PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.",
     "solver.depth_label": "Max depth:",
     "solver.time_label": "Time limit (ms):",
@@ -120,13 +122,15 @@ const I18N = {
 
     // Solucionador de PCP (limitado)
     "solver.title": "Solucionador de PCP (limitado)",
+    "solver.title_pcp": "Resolvedor PCP (busca limitada)",
+    "solver.title_mpcp": "Resolvedor MPCP (busca limitada)",
     "solver.note": "PCP é indecidível. Este solucionador faz uma busca limitada e pode falhar mesmo que exista uma solução.",
     "solver.depth_label": "Profundidade máx.:",
     "solver.time_label": "Limite de tempo (ms):",
     "solver.nodes_label": "Limite de nós:",
     "solver.solve_btn": "Tentar resolver",
     "solver.cancel_btn": "Cancelar",
-    "solver.load_btn": "Carregar solução no workspace",
+    "solver.load_btn": "Carregar solução na área de trabalho",
     "solver.status.need_dominoes": "Gere os dominós primeiro.",
     "solver.status.running": "Buscando…",
     "solver.status.progress": "Expandidos {N} nós (prof={D}, melhor sufixo={B})",

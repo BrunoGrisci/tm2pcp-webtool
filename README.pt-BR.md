@@ -5,8 +5,6 @@
   <strong>Português (Brasil)</strong>
 </p>
 
-# tm2pcp-webtool
-
 **tm2pcp-webtool** é uma ferramenta educacional interativa, executada diretamente no navegador, que demonstra a redução clássica do **Problema da Aceitação de Máquinas de Turing** para o **Problema da Correspondência de Post Modificado (MPCP)** e, em seguida, do **MPCP para o PCP**.
 
 A ferramenta foi projetada para o ensino de **Teoria da Computação**, permitindo que estudantes *visualizem*, *manipulem* e *simulem* a execução de uma Máquina de Turing por meio de dominós.

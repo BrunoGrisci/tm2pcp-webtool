@@ -16,31 +16,6 @@ const I18N = {
     "status.export_none": "Nothing to export: generate dominoes first.",
     "status.export_ok": "Exported {N} dominoes to {FILE}.",
 
-    // PCP solver (bounded)
-    "solver.title": "PCP Solver (bounded)",
-    "solver.title_pcp": "PCP Solver (bounded)",
-    "solver.title_mpcp": "MPCP Solver (bounded)",
-    "solver.note": "PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.",
-    "solver.depth_label": "Max depth:",
-    "solver.time_label": "Time limit (ms):",
-    "solver.nodes_label": "Node limit:",
-    "solver.solve_btn": "Try solve",
-    "solver.cancel_btn": "Cancel",
-    "solver.load_btn": "Load solution into workspace",
-    "solver.status.need_dominoes": "Generate dominoes first.",
-    "solver.status.running": "Searching…",
-    "solver.status.progress": "Expanded {N} nodes (depth={D}, best suffix={B})",
-    "solver.status.found": "Solution found (length {LEN}).",
-    "solver.status.done": "Solver finished.",
-    "solver.status.cancelled": "Solver cancelled.",
-    "solver.status.error": "Solver error: {ERR}",
-    "solver.result.found": "Found solution (length {LEN}) in {MS} ms after expanding {N} nodes. Sequence (1-based indices): {SEQ}",
-    "solver.result.notfound": "No solution found within the current bounds. (expanded {N} nodes, {MS} ms)",
-    "solver.result.timeout": "Time limit reached. (expanded {N} nodes, {MS} ms)",
-    "solver.result.nodelimit": "Node limit reached. (expanded {N} nodes, {MS} ms)",
-    "solver.result.cancelled": "Cancelled.",
-
-
     "label.mpcp_to_pcp": "MPCP ⇒ PCP",
     "label.dark_mode": "Dark mode",
     "button.clear_workspace": "Clear workspace",
@@ -102,8 +77,30 @@ const I18N = {
 
     // Footer
     "footer.code_label": "Code on GitHub:",
-    "footer.licensed_label": "Licensed under"
-  },
+    "footer.licensed_label": "Licensed under",
+    "solver.title": "PCP Solver (bounded)",
+    "solver.note": "PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.",
+    "solver.depth_label": "Max depth:",
+    "solver.time_label": "Time limit (ms):",
+    "solver.nodes_label": "Node limit:",
+    "solver.solve_btn": "Try solve",
+    "solver.cancel_btn": "Cancel",
+    "solver.load_btn": "Load solution into workspace",
+    "solver.status.need_dominoes": "Generate dominoes first.",
+    "solver.status.running": "Searching…",
+    "solver.status.progress": "Expanded {N} nodes (depth={D}, best suffix={B})",
+    "solver.status.found": "Solution found (length {LEN}).",
+    "solver.status.done": "Solver finished.",
+    "solver.status.cancelled": "Solver cancelled.",
+    "solver.status.error": "Solver error: {ERR}",
+    "solver.result.found": "Found solution (length {LEN}) in {MS} ms after expanding {N} nodes. Sequence (1-based indices): {SEQ}",
+    "solver.result.notfound": "No solution found within the current bounds. (expanded {N} nodes, {MS} ms)",
+    "solver.result.timeout": "Time limit reached. (expanded {N} nodes, {MS} ms)",
+    "solver.result.nodelimit": "Node limit reached. (expanded {N} nodes, {MS} ms)",
+    "solver.result.cancelled": "Cancelled.",
+    "solver.title_pcp": "PCP Solver (bounded)",
+    "solver.title_mpcp": "MPCP Solver (bounded)"
+},
 
   "pt-BR": {
     // Titles / sections
@@ -119,31 +116,6 @@ const I18N = {
     "tooltip.export_csv": "Exporta o conjunto de dominós atualmente exibido para um arquivo CSV.",
     "status.export_none": "Nada para exportar: gere os dominós primeiro.",
     "status.export_ok": "Exportados {N} dominós para {FILE}.",
-
-    // Solucionador de PCP (limitado)
-    "solver.title": "Solucionador de PCP (limitado)",
-    "solver.title_pcp": "Resolvedor PCP (busca limitada)",
-    "solver.title_mpcp": "Resolvedor MPCP (busca limitada)",
-    "solver.note": "PCP é indecidível. Este solucionador faz uma busca limitada e pode falhar mesmo que exista uma solução.",
-    "solver.depth_label": "Profundidade máx.:",
-    "solver.time_label": "Limite de tempo (ms):",
-    "solver.nodes_label": "Limite de nós:",
-    "solver.solve_btn": "Tentar resolver",
-    "solver.cancel_btn": "Cancelar",
-    "solver.load_btn": "Carregar solução na área de trabalho",
-    "solver.status.need_dominoes": "Gere os dominós primeiro.",
-    "solver.status.running": "Buscando…",
-    "solver.status.progress": "Expandidos {N} nós (prof={D}, melhor sufixo={B})",
-    "solver.status.found": "Solução encontrada (tamanho {LEN}).",
-    "solver.status.done": "Busca finalizada.",
-    "solver.status.cancelled": "Busca cancelada.",
-    "solver.status.error": "Erro no solucionador: {ERR}",
-    "solver.result.found": "Solução encontrada (tamanho {LEN}) em {MS} ms após expandir {N} nós. Sequência (índices começando em 1): {SEQ}",
-    "solver.result.notfound": "Nenhuma solução encontrada dentro dos limites atuais. (expandidos {N} nós, {MS} ms)",
-    "solver.result.timeout": "Limite de tempo atingido. (expandidos {N} nós, {MS} ms)",
-    "solver.result.nodelimit": "Limite de nós atingido. (expandidos {N} nós, {MS} ms)",
-    "solver.result.cancelled": "Cancelado.",
-
 
     "label.mpcp_to_pcp": "PCPM ⇒ PCP",
     "label.dark_mode": "Modo escuro",
@@ -208,8 +180,30 @@ const I18N = {
 
     // Footer
     "footer.code_label": "Código no GitHub:",
-    "footer.licensed_label": "Licenciado sob"
-  }
+    "footer.licensed_label": "Licenciado sob",
+    "solver.title": "Solucionador de PCP (limitado)",
+    "solver.note": "PCP é indecidível. Este solucionador faz uma busca limitada e pode falhar mesmo que exista uma solução.",
+    "solver.depth_label": "Profundidade máx.:",
+    "solver.time_label": "Limite de tempo (ms):",
+    "solver.nodes_label": "Limite de nós:",
+    "solver.solve_btn": "Tentar resolver",
+    "solver.cancel_btn": "Cancelar",
+    "solver.load_btn": "Carregar solução na área de trabalho",
+    "solver.status.need_dominoes": "Gere os dominós primeiro.",
+    "solver.status.running": "Buscando…",
+    "solver.status.progress": "Expandidos {N} nós (prof={D}, melhor sufixo={B})",
+    "solver.status.found": "Solução encontrada (tamanho {LEN}).",
+    "solver.status.done": "Busca finalizada.",
+    "solver.status.cancelled": "Busca cancelada.",
+    "solver.status.error": "Erro no solucionador: {ERR}",
+    "solver.result.found": "Solução encontrada (tamanho {LEN}) em {MS} ms após expandir {N} nós. Sequência (índices começando em 1): {SEQ}",
+    "solver.result.notfound": "Nenhuma solução encontrada dentro dos limites atuais. (expandidos {N} nós, {MS} ms)",
+    "solver.result.timeout": "Limite de tempo atingido. (expandidos {N} nós, {MS} ms)",
+    "solver.result.nodelimit": "Limite de nós atingido. (expandidos {N} nós, {MS} ms)",
+    "solver.result.cancelled": "Cancelado.",
+    "solver.title_pcp": "Resolvedor PCP (busca limitada)",
+    "solver.title_mpcp": "Resolvedor MPCP (busca limitada)"
+}
 };
 
 let currentLang = "en";

@@ -657,7 +657,7 @@
 
     <hr style="margin: 0.9rem 0; border: none; border-top: 1px solid var(--panel-border);">
 
-    <div id="solverPanel">
+<div id="solverPanel">
       <h2 id="solverTitle" data-i18n="solver.title_mpcp" style="margin-top:0;">MPCP Solver (bounded)</h2>
       <div class="small-note" data-i18n="solver.note">
         PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.
@@ -1836,6 +1836,7 @@
 
     const reader = new FileReader();
     reader.onload = (e) => {
+    resetDominoWorkspaceAndSolver();
     try {
       currentTM = parseMt(e.target.result);
       // Clear input word when a new TM is loaded
@@ -1863,6 +1864,10 @@
       setStatusFromKey("status.need_mt", {}, true);
       return;
     }
+
+    // Before generating a new palette, disable + reset the solver board.
+    resetSolverBoard();
+    setSolverPanelEnabled(false);
 
     const inputEl = document.getElementById('inputWord');
     const w = (inputEl && inputEl.value != null) ? inputEl.value : "";
@@ -1895,6 +1900,7 @@
     try {
       mpcpDominoes = buildDominoes(currentTM, w);
       updateDominoView();
+      setSolverPanelEnabled(!!(currentDominoes && currentDominoes.length));
     } catch (err) {
       console.error(err);
       setStatusFromKey("status.gen_error", { ERR: err.message }, true);
@@ -1943,11 +1949,18 @@
   });
 
   document.getElementById('toggleMPCP').addEventListener('change', () => {
+    // Switching MPCP⇔PCP changes the instance; reset solver state.
+    resetSolverBoard();
+    updateSolverTitle();
+    setSolverPanelEnabled(!!(currentDominoes && currentDominoes.length));
+
     if (!mpcpDominoes || mpcpDominoes.length === 0) {
+      setSolverPanelEnabled(false);
       return;
     }
+
     updateDominoView();
-    updateSolverTitle();
+    setSolverPanelEnabled(!!(currentDominoes && currentDominoes.length));
   });
 
   function getCurrentLang() {
@@ -2016,19 +2029,72 @@
     });
   }
 
-
-
   // -----------------------------
   // PCP solver (bounded) in a Web Worker
   // -----------------------------
-  function parsePositiveInt(str, fallback) {
-      const n = parseInt(String(str || "").trim(), 10);
-      return Number.isFinite(n) && n >= 0 ? n : fallback;
-    }
-
-    let solverWorker = null;
+  let solverWorker = null;
   let solverWorkerUrl = null;
   let lastSolverSolution = null; // array of domino indices (0-based) for currentDominoes
+
+    // Enable/disable the whole solver board (inputs + buttons). When disabled, any previous
+    // solver result is cleared to avoid loading stale solutions into a different instance.
+    function setSolverPanelEnabled(enabled) {
+      const ids = ["solverDepth", "solverTime", "solverNodes", "solveBtn", "cancelSolveBtn", "loadSolutionBtn"];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        el.disabled = !enabled;
+      }
+      if (!enabled) {
+        lastSolverSolution = null;
+        setSolverProgressText("");
+        setSolverResultText("");
+      } else {
+        // When enabled and not running, cancel stays disabled.
+        const cancelBtn = document.getElementById("cancelSolveBtn");
+        if (cancelBtn) cancelBtn.disabled = true;
+        const loadBtn = document.getElementById("loadSolutionBtn");
+        if (loadBtn) loadBtn.disabled = !lastSolverSolution;
+      }
+    }
+
+    function resetSolverBoard() {
+      // Stop any ongoing run and clear results/progress.
+      try { cancelSolver(); } catch (e) {
+        try { terminateSolverWorker(); } catch (_e) {}
+      }
+      lastSolverSolution = null;
+      setSolverUIRunning(false);
+      setSolverProgressText("");
+      setSolverResultText("");
+      const loadBtn = document.getElementById("loadSolutionBtn");
+      if (loadBtn) loadBtn.disabled = true;
+    }
+
+    function resetDominoWorkspaceAndSolver() {
+      // Reset palette + workspace (empty) + solver to initial status.
+      mpcpDominoes = [];
+      currentDominoes = [];
+      renderDominoPalette([]);
+      const workspace = document.getElementById("workspace");
+      if (workspace) workspace.innerHTML = "";
+      concatWorkspaceStrings();
+      resetSolverBoard();
+      setSolverPanelEnabled(false);
+    }
+
+    function updateSolverTitle() {
+      const titleEl = document.getElementById("solverTitle");
+      if (!titleEl) return;
+      const usePCP = document.getElementById("toggleMPCP")?.checked;
+      const key = usePCP ? "solver.title_pcp" : "solver.title_mpcp";
+      titleEl.setAttribute("data-i18n", key);
+      if (typeof applyI18n === "function") {
+        applyI18n();
+      } else {
+        titleEl.textContent = usePCP ? "PCP Solver (bounded)" : "MPCP Solver (bounded)";
+      }
+    }
 
   function terminateSolverWorker() {
     if (solverWorker) {
@@ -2220,188 +2286,180 @@
     return Number.isFinite(n) && n >= 0 ? n : fallback;
   }
 
-  
+  function setSolverUIRunning(running) {
+    const solveBtn = document.getElementById("solveBtn");
+    const cancelBtn = document.getElementById("cancelSolveBtn");
+    const loadBtn = document.getElementById("loadSolutionBtn");
 
-function setSolverUIRunning(running) {
-      const solveBtn = document.getElementById("solveBtn");
-      const cancelBtn = document.getElementById("cancelSolveBtn");
-      const loadBtn = document.getElementById("loadSolutionBtn");
+    if (solveBtn) solveBtn.disabled = running;
+    if (cancelBtn) cancelBtn.disabled = !running;
+    if (loadBtn) loadBtn.disabled = running || !lastSolverSolution;
+  }
 
-      if (solveBtn) solveBtn.disabled = running;
-      if (cancelBtn) cancelBtn.disabled = !running;
-      if (loadBtn) loadBtn.disabled = running || !lastSolverSolution;
+  function setSolverProgressText(txt) {
+    const el = document.getElementById("solverProgress");
+    if (el) el.textContent = txt || "";
+  }
+
+  function setSolverResultText(txt) {
+    const el = document.getElementById("solverResult");
+    if (el) el.textContent = txt || "";
+  }
+
+  function startSolver() {
+    if (!currentDominoes || currentDominoes.length === 0) {
+      setStatusFromKey("solver.status.need_dominoes", {}, true);
+      return;
     }
 
-    function setSolverProgressText(txt) {
-      const el = document.getElementById("solverProgress");
-      if (el) el.textContent = txt || "";
-    }
+    const depth = parsePositiveInt(document.getElementById("solverDepth")?.value, 20);
+    const timeLimit = parsePositiveInt(document.getElementById("solverTime")?.value, 1500);
+    const nodeLimit = parsePositiveInt(document.getElementById("solverNodes")?.value, 200000);
 
-    function setSolverResultText(txt) {
-      const el = document.getElementById("solverResult");
-      if (el) el.textContent = txt || "";
-    }
+    const usePCP = document.getElementById("toggleMPCP")?.checked;
+    const forceFirst = !usePCP; // in MPCP mode, first domino must be used first
 
-    
-    function updateSolverTitle() {
-      const titleEl = document.getElementById("solverTitle");
-      if (!titleEl) return;
-      const usePCP = document.getElementById("toggleMPCP")?.checked;
-      const key = usePCP ? "solver.title_pcp" : "solver.title_mpcp";
-      titleEl.setAttribute("data-i18n", key);
-      if (typeof applyI18n === "function") applyI18n();
-      else titleEl.textContent = usePCP ? "PCP Solver (bounded)" : "MPCP Solver (bounded)";
-    }
+    // Build worker input dominoes (token arrays)
+    const dominosPayload = currentDominoes.map(d => ({
+      top: (d.top || []).map(String),
+      bottom: (d.bottom || []).map(String),
+    }));
 
-function startSolver() {
-      if (!currentDominoes || currentDominoes.length === 0) {
-        setStatusFromKey("solver.status.need_dominoes", {}, true);
+    lastSolverSolution = null;
+    setSolverUIRunning(true);
+    setSolverProgressText(t("solver.status.running"));
+    setSolverResultText("");
+
+    const worker = ensureSolverWorker();
+
+    worker.onmessage = (ev) => {
+      const msg = ev.data || {};
+      if (msg.type === "progress") {
+        const nodes = msg.nodes || 0;
+        const depthLimit = msg.depthLimit || 0;
+        const best = (msg.bestSuffixLen != null && msg.bestSuffixLen !== Infinity) ? msg.bestSuffixLen : "–";
+        setSolverProgressText(t("solver.status.progress", { N: nodes, D: depthLimit, B: best }));
         return;
       }
-
-      const depth = parsePositiveInt(document.getElementById("solverDepth")?.value, 20);
-      const timeLimit = parsePositiveInt(document.getElementById("solverTime")?.value, 1500);
-      const nodeLimit = parsePositiveInt(document.getElementById("solverNodes")?.value, 200000);
-
-      const usePCP = document.getElementById("toggleMPCP")?.checked;
-      const forceFirst = !usePCP; // in MPCP mode, first domino must be used first
-
-      // Build worker input dominoes (token arrays)
-      const dominosPayload = currentDominoes.map(d => ({
-        top: (d.top || []).map(String),
-        bottom: (d.bottom || []).map(String),
-      }));
-
-      lastSolverSolution = null;
-      setSolverUIRunning(true);
-      setSolverProgressText(t("solver.status.running"));
-      setSolverResultText("");
-
-      const worker = ensureSolverWorker();
-
-      worker.onmessage = (ev) => {
-        const msg = ev.data || {};
-        if (msg.type === "progress") {
-          const nodes = msg.nodes || 0;
-          const depthLimit = msg.depthLimit || 0;
-          const best = (msg.bestSuffixLen != null && msg.bestSuffixLen !== Infinity) ? msg.bestSuffixLen : "–";
-          setSolverProgressText(t("solver.status.progress", { N: nodes, D: depthLimit, B: best }));
-          return;
-        }
-        if (msg.type === "error") {
-          setSolverUIRunning(false);
-          setSolverProgressText("");
-          setStatusFromKey("solver.status.error", { ERR: msg.error || "Unknown error" }, true);
-          terminateSolverWorker();
-          return;
-        }
-        if (msg.type === "done") {
-          const res = msg.result || {};
-          setSolverUIRunning(false);
-
-          const nodes = res.nodes ?? 0;
-          const ms = res.ms ?? 0;
-
-          if (res.status === "found" && Array.isArray(res.solution)) {
-            lastSolverSolution = res.solution.slice();
-
-            const seq1 = lastSolverSolution.map(i => i + 1).join(", ");
-            setSolverResultText(
-              t("solver.result.found", { SEQ: seq1, LEN: lastSolverSolution.length, N: nodes, MS: ms })
-            );
-
-            setStatusFromKey("solver.status.found", { LEN: lastSolverSolution.length }, false);
-          } else {
-            lastSolverSolution = null;
-            let key = "solver.result.notfound";
-            if (res.status === "timeout") key = "solver.result.timeout";
-            else if (res.status === "nodelimit") key = "solver.result.nodelimit";
-            else if (res.status === "cancelled") key = "solver.result.cancelled";
-
-            setSolverResultText(t(key, { N: nodes, MS: ms }));
-            setStatusFromKey("solver.status.done", {}, false);
-          }
-
-          setSolverProgressText("");
-          // Update load button
-          const loadBtn = document.getElementById("loadSolutionBtn");
-          if (loadBtn) loadBtn.disabled = !lastSolverSolution;
-
-          // keep worker alive for next run (faster); do not terminate here
-          return;
-        }
-      };
-
-      worker.postMessage({
-        type: "start",
-        dominos: dominosPayload,
-        opts: {
-          maxDepth: depth,
-          timeLimitMs: timeLimit,
-          nodeLimit: nodeLimit,
-          maxSuffixLen: 400, // safety valve; can be made UI later
-          forceFirst: forceFirst
-        }
-      });
-    }
-
-    function cancelSolver() {
-      if (!solverWorker) return;
-      solverWorker.postMessage({ type: "cancel" });
-      setSolverUIRunning(false);
-      setSolverProgressText("");
-      setSolverResultText(t("solver.result.cancelled", { N: "–", MS: "–" }));
-      setStatusFromKey("solver.status.cancelled", {}, false);
-      // terminate worker to fully stop CPU
-      terminateSolverWorker();
-    }
-
-    function loadSolverSolutionIntoWorkspace() {
-      if (!lastSolverSolution || !Array.isArray(lastSolverSolution) || lastSolverSolution.length === 0) return;
-
-      const workspace = document.getElementById("workspace");
-      if (!workspace) return;
-
-      const usePCP = document.getElementById("toggleMPCP")?.checked;
-
-      // First, clean the workspace before loading the solution
-      if (usePCP) {
-        workspace.innerHTML = "";
-      } else {
-        const children = Array.from(workspace.children);
-        const fixed = children.find(ch => ch.dataset && ch.dataset.fixed === "true");
-        workspace.innerHTML = "";
-        if (fixed) workspace.appendChild(fixed);
+      if (msg.type === "error") {
+        setSolverUIRunning(false);
+        setSolverProgressText("");
+        setStatusFromKey("solver.status.error", { ERR: msg.error || "Unknown error" }, true);
+        terminateSolverWorker();
+        return;
       }
+      if (msg.type === "done") {
+        const res = msg.result || {};
+        setSolverUIRunning(false);
 
-      // In MPCP mode, first tile is already fixed in the workspace.
-      // The solver solution is forced to start with 0; skip it when appending.
-      const startIdx = (!usePCP && lastSolverSolution[0] === 0) ? 1 : 0;
+        const nodes = res.nodes ?? 0;
+        const ms = res.ms ?? 0;
 
-      for (let k = startIdx; k < lastSolverSolution.length; k++) {
-        const idx = lastSolverSolution[k];
-        const tile = createWorkspaceTile(idx);
-        workspace.appendChild(tile);
+        if (res.status === "found" && Array.isArray(res.solution)) {
+          lastSolverSolution = res.solution.slice();
+
+          const seq1 = lastSolverSolution.map(i => i + 1).join(", ");
+          setSolverResultText(
+            t("solver.result.found", { SEQ: seq1, LEN: lastSolverSolution.length, N: nodes, MS: ms })
+          );
+
+          setStatusFromKey("solver.status.found", { LEN: lastSolverSolution.length }, false);
+        } else {
+          lastSolverSolution = null;
+          let key = "solver.result.notfound";
+          if (res.status === "timeout") key = "solver.result.timeout";
+          else if (res.status === "nodelimit") key = "solver.result.nodelimit";
+          else if (res.status === "cancelled") key = "solver.result.cancelled";
+
+          setSolverResultText(t(key, { N: nodes, MS: ms }));
+          setStatusFromKey("solver.status.done", {}, false);
+        }
+
+        setSolverProgressText("");
+        // Update load button
+        const loadBtn = document.getElementById("loadSolutionBtn");
+        if (loadBtn) loadBtn.disabled = !lastSolverSolution;
+
+        // keep worker alive for next run (faster); do not terminate here
+        return;
       }
-      concatWorkspaceStrings();
+    };
+
+    worker.postMessage({
+      type: "start",
+      dominos: dominosPayload,
+      opts: {
+        maxDepth: depth,
+        timeLimitMs: timeLimit,
+        nodeLimit: nodeLimit,
+        maxSuffixLen: 400, // safety valve; can be made UI later
+        forceFirst: forceFirst
+      }
+    });
+  }
+
+  function cancelSolver() {
+    if (!solverWorker) return;
+    solverWorker.postMessage({ type: "cancel" });
+    setSolverUIRunning(false);
+    setSolverProgressText("");
+    setSolverResultText(t("solver.result.cancelled", { N: "–", MS: "–" }));
+    setStatusFromKey("solver.status.cancelled", {}, false);
+    // terminate worker to fully stop CPU
+    terminateSolverWorker();
+  }
+
+  function loadSolverSolutionIntoWorkspace() {
+    if (!lastSolverSolution || !Array.isArray(lastSolverSolution) || lastSolverSolution.length === 0) return;
+
+    const workspace = document.getElementById("workspace");
+    if (!workspace) return;
+
+    const usePCP = document.getElementById("toggleMPCP")?.checked;
+
+    // First, clean the workspace before loading the solution
+    if (usePCP) {
+      workspace.innerHTML = "";
+    } else {
+      // Keep the fixed first tile (MPCP)
+      const children = Array.from(workspace.children);
+      const fixed = children.find(ch => ch.dataset && ch.dataset.fixed === "true");
+      workspace.innerHTML = "";
+      if (fixed) workspace.appendChild(fixed);
     }
 
-    // Hook up UI events
-    const solveBtnEl = document.getElementById("solveBtn");
-    if (solveBtnEl) solveBtnEl.addEventListener("click", startSolver);
+    // In MPCP mode, first tile is already fixed in the workspace.
+    // The solver solution is forced to start with 0; skip it when appending.
+    const startIdx = (!usePCP && lastSolverSolution[0] === 0) ? 1 : 0;
 
-    const cancelBtnEl = document.getElementById("cancelSolveBtn");
-    if (cancelBtnEl) cancelBtnEl.addEventListener("click", cancelSolver);
+    for (let k = startIdx; k < lastSolverSolution.length; k++) {
+      const idx = lastSolverSolution[k];
+      const tile = createWorkspaceTile(idx);
+      workspace.appendChild(tile);
+    }
 
-    const loadBtnEl = document.getElementById("loadSolutionBtn");
-    if (loadBtnEl) loadBtnEl.addEventListener("click", loadSolverSolutionIntoWorkspace);
+    concatWorkspaceStrings();
+  }
+
+
+  // Hook up UI events
+  const solveBtnEl = document.getElementById("solveBtn");
+  if (solveBtnEl) solveBtnEl.addEventListener("click", startSolver);
+
+  const cancelBtnEl = document.getElementById("cancelSolveBtn");
+  if (cancelBtnEl) cancelBtnEl.addEventListener("click", cancelSolver);
+
+  const loadBtnEl = document.getElementById("loadSolutionBtn");
+  if (loadBtnEl) loadBtnEl.addEventListener("click", loadSolverSolutionIntoWorkspace);
+
+
+
 
   setupWorkspaceDnD();
   applyDarkModeFromStorage();
   setupSplitter();
   initLanguageFromStorage();
-    updateSolverTitle();
-refreshTooltips();
+  refreshTooltips();
   refreshDarkModeSwitchUI();
   refreshLangSwitchUI();
 

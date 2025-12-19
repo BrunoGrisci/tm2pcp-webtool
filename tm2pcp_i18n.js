@@ -80,6 +80,7 @@ const I18N = {
     "footer.licensed_label": "Licensed under",
     "solver.title": "PCP Solver (bounded)",
     "solver.note": "PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.",
+    "solver.credit": "Inspired by Arne Vogel's blogpost and algorithm (<a href=\"https://www.arnevogel.com/post-correspondence-problem/\" target=\"_blank\" rel=\"noopener noreferrer\">arnevogel.com</a>) and Ling Zhao's Thesis (Chapter 2.2) (<a href=\"https://webdocs.cs.ualberta.ca/~games/PCP/thesis/pcp.pdf\" target=\"_blank\" rel=\"noopener noreferrer\">pcp.pdf</a>).",
     "solver.depth_label": "Max depth:",
     "solver.time_label": "Time limit (ms):",
     "solver.nodes_label": "Node limit:",
@@ -183,6 +184,7 @@ const I18N = {
     "footer.licensed_label": "Licenciado sob",
     "solver.title": "Solucionador de PCP (limitado)",
     "solver.note": "PCP é indecidível. Este solucionador faz uma busca limitada e pode falhar mesmo que exista uma solução.",
+    "solver.credit": "Inspirado no blogpost e algoritmo de Arne Vogel (<a href=\"https://www.arnevogel.com/post-correspondence-problem/\" target=\"_blank\" rel=\"noopener noreferrer\">arnevogel.com</a>) e na Tese (Capítulo 2.2) de Ling Zhao (<a href=\"https://webdocs.cs.ualberta.ca/~games/PCP/thesis/pcp.pdf\" target=\"_blank\" rel=\"noopener noreferrer\">pcp.pdf</a>).",
     "solver.depth_label": "Profundidade máx.:",
     "solver.time_label": "Limite de tempo (ms):",
     "solver.nodes_label": "Limite de nós:",
@@ -250,6 +252,14 @@ function applyI18n() {
     if (!key) return;
     el.textContent = t(key);
   });
+
+  // HTML-capable i18n (used only when we intentionally want links/markup)
+  document.querySelectorAll("[data-i18n-html]").forEach(el => {
+    const key = el.getAttribute("data-i18n-html");
+    if (!key) return;
+    el.innerHTML = t(key);
+  });
+
 
   const lbl = document.getElementById("tmTableLabel");
   if (lbl) {

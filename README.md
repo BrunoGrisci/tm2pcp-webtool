@@ -62,6 +62,59 @@ domino_id,top_string,bottom_string
 
 ---
 
+### 🔍 (M)PCP Solver (bounded)
+
+The tool includes a **bounded solver** for experimental exploration.
+
+⚠️ **Important:**  
+PCP is **undecidable**. This solver is **not** a decision procedure.
+
+#### How the solver works
+
+- Performs an incremental, prefix-based search
+- Keeps only prefix-consistent sequences
+- Expands sequences up to user-defined limits:
+  - **Max depth**
+  - **Time limit (ms)**
+  - **Node limit**
+
+The algorithm is inspired by:
+
+- **Ling Zhao**, *Solving the Post Correspondence Problem*, PhD Thesis, Chapter 2.2  
+- **Arne Vogel**, PCP solver and blog explanation
+
+#### Solver controls
+
+- **Try solve**: start the bounded search
+- **Cancel**: interrupt the search
+- **Load solution into workspace**: inspect a found solution
+
+#### Why this does not contradict undecidability
+
+- If the solver finds a solution → it is correct
+- If it stops without finding one → no conclusion can be drawn
+
+This behavior is **expected** and illustrates undecidability in practice.
+
+---
+
+### ❓ Integrated help system
+
+Every major part of the interface includes a **“?” help button**, which opens an in-page explanation covering:
+
+- theoretical background,
+- formal definitions,
+- GUI behavior,
+- and how each component relates to the reduction.
+
+Help content is:
+
+- bilingual (English / Brazilian Portuguese),
+- synchronized with dark mode,
+- designed to be read independently by students.
+
+---
+
 ### Usability & UI
 - 🌙 / ☀️ **Dark mode toggle**
 - 🇬🇧 / 🇧🇷 **Language toggle** (English & Brazilian Portuguese)
@@ -119,25 +172,6 @@ It is suitable for:
 
 ---
 
-## 🎓 Credits
-
-**Developed by**  
-**Prof. Bruno Iochins Grisci**  
-Departamento de Informática Teórica  
-Instituto de Informática – Universidade Federal do Rio Grande do Sul (UFRGS)  
-🔗 https://brunogrisci.github.io/  
-🔗 https://www.inf.ufrgs.br/site/  
-🔗 https://www.ufrgs.br/site/
-
-**Based on and inspired by**  
-Classes by **Prof. Rodrigo Machado**  
-📺 https://www.youtube.com/watch?v=u66FlodaBf4&list=PLLUEUvJhgJJCC76AYWdWH-GcOS2BogpEN&index=27
-
-**Development note**  
-This webtool was created with the assistance of **Generative AI (ChatGPT 5.1)**.
-
----
-
 ## 🌐 Internationalization (i18n)
 
 - Full support for **English** and **Brazilian Portuguese**
@@ -155,16 +189,6 @@ This webtool was created with the assistance of **Generative AI (ChatGPT 5.1)**.
 
 ---
 
-## 📦 License
-
-This project is licensed under the **MIT License**.
-
-You are free to use, modify, and redistribute it for academic and educational purposes, provided proper attribution is given.
-
-See the `LICENSE` file for details.
-
----
-
 ## 🚀 Future work (ideas)
 
 - Export domino sets as JSON
@@ -172,6 +196,37 @@ See the `LICENSE` file for details.
 - Step-by-step guided construction mode
 - Animated TM execution trace
 - Support for additional TM file formats
+
+---
+## 🎓 Credits
+
+**Developed by**  
+**Prof. Bruno Iochins Grisci**  
+Departamento de Informática Teórica  
+Instituto de Informática – Universidade Federal do Rio Grande do Sul (UFRGS)  
+🔗 https://brunogrisci.github.io/  
+🔗 https://www.inf.ufrgs.br/site/  
+🔗 https://www.ufrgs.br/site/
+
+**Based on and inspired by**  
+Classes by **Prof. Rodrigo Machado**  
+📺 https://www.youtube.com/watch?v=u66FlodaBf4&list=PLLUEUvJhgJJCC76AYWdWH-GcOS2BogpEN&index=27
+
+**Solver inspiration**:
+  - Ling Zhao, *Solving the Post Correspondence Problem*, PhD Thesis, Ch. 2.2
+  - Arne Vogel, PCP solver and blog post
+
+**Development note**  
+This webtool was created with the assistance of **Generative AI (ChatGPT 5.1)**.
+
+---
+## 📦 License
+
+This project is licensed under the **MIT License**.
+
+You are free to use, modify, and redistribute it for academic and educational purposes, provided proper attribution is given.
+
+See the `LICENSE` file for details.
 
 ---
 

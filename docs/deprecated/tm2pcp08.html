@@ -1,5 +1,3 @@
-<!-- Bruno Iochins Grisci 2025 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,9 +100,9 @@
     }
 
     #tmTableLabel {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
     }
 
     #tmTable {
@@ -210,116 +208,6 @@
       color: var(--fg);
       transition: background 0.2s ease, color 0.2s ease;
     }
-
-    /* -----------------------------
-       Help modal (overlay)
-       ----------------------------- */
-    .help-btn {
-      width: 1.35rem;
-      height: 1.35rem;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      line-height: 1;
-      font-weight: 700;
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      color: var(--fg);
-      cursor: pointer;
-      user-select: none;
-    }
-    .help-btn:hover { filter: brightness(0.98); }
-    body.dark-mode .help-btn:hover { filter: brightness(1.08); }
-    .help-btn:focus { outline: 2px solid #60a5fa; outline-offset: 2px; }
-
-    .help-btn-inline {
-      margin-left: 0.35rem;
-      transform: translateY(-1px);
-    }
-
-    .help-overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.5);
-      z-index: 9999;
-      padding: 1.25rem;
-    }
-    body.dark-mode .help-overlay { background: rgba(0,0,0,0.65); }
-    .help-overlay.open { display: flex; }
-
-    body.help-open { overflow: hidden; }
-
-    .help-modal {
-      width: min(900px, 96vw);
-      max-height: min(85vh, 900px);
-      overflow: auto;
-      background: var(--panel-bg);
-      color: var(--fg);
-      border: 1px solid var(--panel-border);
-      border-radius: 0.75rem;
-      box-shadow: 0 16px 50px rgba(0,0,0,0.25);
-    }
-    body.dark-mode .help-modal { box-shadow: 0 20px 60px rgba(0,0,0,0.55); }
-
-    .help-modal-header {
-      position: sticky;
-      top: 0;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      background: var(--panel-bg);
-      border-bottom: 1px solid var(--panel-border);
-    }
-    .help-modal-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      margin: 0;
-    }
-    .help-modal-close {
-      margin-left: auto;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 999px;
-      border: 1px solid var(--panel-border);
-      background: var(--panel-bg);
-      color: var(--fg);
-      cursor: pointer;
-      font-size: 1.05rem;
-      line-height: 1;
-    }
-    .help-modal-close:hover { filter: brightness(0.98); }
-    body.dark-mode .help-modal-close:hover { filter: brightness(1.08); }
-
-    .help-modal-body {
-      padding: 1rem 1rem 1.15rem 1rem;
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-    .help-modal-body h3 { margin: 0.85rem 0 0.35rem 0; font-size: 1rem; }
-    .help-modal-body p { margin: 0.5rem 0; }
-    .help-modal-body ul { margin: 0.35rem 0 0.75rem 1.15rem; }
-    .help-modal-body code {
-      background: rgba(0,0,0,0.06);
-      padding: 0.1rem 0.25rem;
-      border-radius: 0.25rem;
-    }
-    body.dark-mode .help-modal-body code { background: rgba(255,255,255,0.08); }
-    .help-modal-body img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 0.5rem;
-      border: 1px solid var(--panel-border);
-      margin: 0.6rem 0;
-    }
-
-    /* When help is open, avoid background scroll */
-    body.help-open { overflow: hidden; }
 
     h1 {
       font-size: 1.4rem;
@@ -674,10 +562,7 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->  
 
-<h1>
-  <span data-i18n="title.main">TM → PCP Domino Generator</span>
-  <button type="button" class="help-btn help-btn-inline" data-help="main_tool" aria-label="Help">?</button>
-</h1>
+<h1 data-i18n="title.main">TM → PCP Domino Generator</h1>
 
 <div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
   <strong data-i18n="about.developed_by_label">Developed by: :</strong>
@@ -715,17 +600,11 @@
 
 <div class="row">
   <div>
-    <label for="mtFile">
-      <span data-i18n="label.mt_file">.mt file:</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="mt_file" aria-label="Help">?</button>
-    </label>
+    <label for="mtFile"><span data-i18n="label.mt_file">.mt file:</span> </label>
     <input type="file" id="mtFile" accept=".mt">
   </div>
   <div>
-    <label for="inputWord">
-      <span data-i18n="label.input_word">Input word w:</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="input_word" aria-label="Help">?</button>
-    </label>
+    <label for="inputWord"><span data-i18n="label.input_word">Input word w:</span> </label>
     <input type="text" id="inputWord" placeholder="e.g., ()">
   </div>
   <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
@@ -734,13 +613,11 @@
     <button id="exportCsvBtn" data-i18n="button.export_csv" title="">
       Export CSV
     </button>
-    <button type="button" class="help-btn" data-help="export_csv" aria-label="Help" style="margin-left:0.15rem;">?</button>
 
     <!-- MPCP/PCP toggle now here -->
     <label style="font-weight:400; cursor:pointer; display:flex; align-items:center; gap:0.35rem;">
       <input type="checkbox" id="toggleMPCP">
       <span data-i18n="label.mpcp_to_pcp">MPCP ⇒ PCP</span>
-      <button type="button" class="help-btn" data-help="mpcp_to_pcp" aria-label="Help" style="margin-left:0.15rem;">?</button>
     </label>
   </div>
 
@@ -763,13 +640,7 @@
   <div id="tmInfo"></div>
 
   <div id="tmTableContainer">
-    <div id="tmTableLabel" style="display:none;">
-      <span data-i18n="tm.table_label">Transition Table</span>
-      <button type="button"
-              class="help-btn help-btn-inline"
-              data-help="transition_table"
-              aria-label="Help">?</button>
-    </div>
+    <div id="tmTableLabel" data-i18n="tm.table_label" style="display:none;">Transition Table</div>
     <div id="tmTable"></div>
   </div>
 </div>
@@ -778,10 +649,7 @@
 
 <div class="split-container">
   <div id="leftPane" class="panel">
-    <h2>
-      <span data-i18n="title.palette">Domino palette</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="domino_palette" aria-label="Help">?</button>
-    </h2>
+    <h2 data-i18n="title.palette">Domino palette</h2>
     <div class="small-note" data-i18n="note.palette">
       Dominoes are grouped and color-coded by construction step. When “MPCP ⇒ PCP” is checked, you see the PCP instance, but still separated by their original steps.
     </div>
@@ -790,10 +658,7 @@
     <hr style="margin: 0.9rem 0; border: none; border-top: 1px solid var(--panel-border);">
 
 <div id="solverPanel">
-      <h2 id="solverTitle" style="margin-top:0;">
-        <span id="solverTitleText" data-i18n="solver.title_mpcp">MPCP Solver (bounded)</span>
-        <button type="button" class="help-btn help-btn-inline" data-help="solver_bounded" aria-label="Help">?</button>
-      </h2>
+      <h2 id="solverTitle" data-i18n="solver.title_mpcp" style="margin-top:0;">MPCP Solver (bounded)</h2>
       <div class="small-note" data-i18n="solver.note">
         PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.
       </div>
@@ -805,24 +670,15 @@
 
       <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:0.75rem; align-items:flex-end;">
         <div>
-          <label for="solverDepth" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.depth_label">Max depth:</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_max_depth" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverDepth" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.depth_label">Max depth:</label><br>
           <input type="text" id="solverDepth" value="20" style="min-width:5.5rem;">
         </div>
         <div>
-          <label for="solverTime" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.time_label">Time limit (ms):</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_time_limit" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverTime" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.time_label">Time limit (ms):</label><br>
           <input type="text" id="solverTime" value="1500" style="min-width:7rem;">
         </div>
         <div>
-          <label for="solverNodes" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.nodes_label">Node limit:</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_node_limit" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverNodes" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.nodes_label">Node limit:</label><br>
           <input type="text" id="solverNodes" value="200000" style="min-width:7rem;">
         </div>
 
@@ -846,10 +702,7 @@
   <div id="divider" class="divider" title="Drag to resize"></div>
 
   <div id="rightPane" class="panel">
-    <h2>
-      <span data-i18n="title.workspace">Workspace (sequence of dominoes)</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="workspace" aria-label="Help">?</button>
-    </h2>
+    <h2 data-i18n="title.workspace">Workspace (sequence of dominoes)</h2>
     <div class="small-note" data-i18n="note.workspace">
       Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.
     </div>
@@ -869,19 +722,6 @@
 
     <div id="concatStrings"></div>
 
-  </div>
-</div>
-
-<!-- Help modal overlay (hidden by default) -->
-<div id="helpOverlay" class="help-overlay" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="help-modal" role="document">
-    <div class="help-modal-header">
-      <h3 id="helpTitle" class="help-modal-title"></h3>
-      <button type="button" id="helpCloseBtn" class="help-modal-close" aria-label="Close">
-        <span aria-hidden="true">✕</span>
-      </button>
-    </div>
-    <div id="helpBody" class="help-modal-body"></div>
   </div>
 </div>
 
@@ -907,89 +747,6 @@
     hasSetLanguage: (typeof window.setLanguage === "function"),
     hasInitLang: (typeof window.initLanguageFromStorage === "function"),
     hasSetStatusFromKey: (typeof window.setStatusFromKey === "function")
-  });
-
-  // -----------------------------
-  // Help modal system ("?" buttons)
-  // -----------------------------
-  let currentHelpId = null;
-
-  function isHelpOpen() {
-    const ov = document.getElementById('helpOverlay');
-    return !!(ov && ov.classList.contains('open'));
-  }
-
-  function renderHelpModal() {
-    if (!currentHelpId) return;
-    const titleEl = document.getElementById('helpTitle');
-    const bodyEl = document.getElementById('helpBody');
-    if (!titleEl || !bodyEl || typeof window.t !== 'function') return;
-
-    titleEl.textContent = window.t(`help.${currentHelpId}.title`);
-    // Body is HTML-capable by design (controlled strings from our own i18n tables).
-    bodyEl.innerHTML = window.t(`help.${currentHelpId}.body_html`);
-  }
-
-  // Expose so i18n.js can refresh it when language toggles.
-  window.refreshHelpModal = function refreshHelpModal() {
-    if (isHelpOpen()) renderHelpModal();
-  };
-
-  function openHelp(helpId) {
-    const ov = document.getElementById('helpOverlay');
-    if (!ov) return;
-    currentHelpId = helpId;
-    renderHelpModal();
-    ov.classList.add('open');
-    ov.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('help-open');
-
-    // Focus close button for accessibility
-    const closeBtn = document.getElementById('helpCloseBtn');
-    if (closeBtn) closeBtn.focus();
-  }
-
-  function closeHelp() {
-    const ov = document.getElementById('helpOverlay');
-    if (!ov) return;
-    ov.classList.remove('open');
-    ov.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('help-open');
-    currentHelpId = null;
-  }
-
-  // Click handler (event delegation): any <button class="help-btn" data-help="..."> opens help.
-  document.addEventListener('click', (ev) => {
-    const target = ev.target;
-    const btn = target && (target.closest ? target.closest('.help-btn') : null);
-    if (btn && btn.dataset && btn.dataset.help) {
-      ev.preventDefault();
-      ev.stopPropagation();
-      openHelp(btn.dataset.help);
-      return;
-    }
-
-    // Close button
-    const closeBtn = target && (target.closest ? target.closest('#helpCloseBtn') : null);
-    if (closeBtn) {
-      ev.preventDefault();
-      closeHelp();
-      return;
-    }
-
-    // Click outside the modal closes it
-    const overlay = document.getElementById('helpOverlay');
-    if (overlay && target === overlay && isHelpOpen()) {
-      closeHelp();
-    }
-  });
-
-  // ESC closes
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' && isHelpOpen()) {
-      ev.preventDefault();
-      closeHelp();
-    }
   });
 
 
@@ -1468,7 +1225,7 @@
     }
 
     if (label) {
-      label.style.display = "flex";
+      label.style.display = "block";
     }
 
     // Build column order: marker first, blank last, everything else in-between
@@ -2332,8 +2089,7 @@
     }
 
     function updateSolverTitle() {
-      // Title text is inside the h2 so the help button remains visible.
-      const titleEl = document.getElementById("solverTitleText") || document.getElementById("solverTitle");
+      const titleEl = document.getElementById("solverTitle");
       if (!titleEl) return;
       const usePCP = document.getElementById("toggleMPCP")?.checked;
       const key = usePCP ? "solver.title_pcp" : "solver.title_mpcp";

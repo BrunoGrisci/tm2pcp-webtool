@@ -1,5 +1,3 @@
-<!-- Bruno Iochins Grisci 2025 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -102,9 +100,9 @@
     }
 
     #tmTableLabel {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
     }
 
     #tmTable {
@@ -674,10 +672,7 @@
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->  
 
-<h1>
-  <span data-i18n="title.main">TM → PCP Domino Generator</span>
-  <button type="button" class="help-btn help-btn-inline" data-help="main_tool" aria-label="Help">?</button>
-</h1>
+<h1 data-i18n="title.main">TM → PCP Domino Generator</h1>
 
 <div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
   <strong data-i18n="about.developed_by_label">Developed by: :</strong>
@@ -724,9 +719,9 @@
   <div>
     <label for="inputWord">
       <span data-i18n="label.input_word">Input word w:</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="input_word" aria-label="Help">?</button>
     </label>
     <input type="text" id="inputWord" placeholder="e.g., ()">
+    <button type="button" class="help-btn help-btn-inline" data-help="input_word" aria-label="Help">?</button>
   </div>
   <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
     <button id="generateBtn" data-i18n="label.generate_btn">Generate dominoes</button>
@@ -734,7 +729,6 @@
     <button id="exportCsvBtn" data-i18n="button.export_csv" title="">
       Export CSV
     </button>
-    <button type="button" class="help-btn" data-help="export_csv" aria-label="Help" style="margin-left:0.15rem;">?</button>
 
     <!-- MPCP/PCP toggle now here -->
     <label style="font-weight:400; cursor:pointer; display:flex; align-items:center; gap:0.35rem;">
@@ -763,13 +757,7 @@
   <div id="tmInfo"></div>
 
   <div id="tmTableContainer">
-    <div id="tmTableLabel" style="display:none;">
-      <span data-i18n="tm.table_label">Transition Table</span>
-      <button type="button"
-              class="help-btn help-btn-inline"
-              data-help="transition_table"
-              aria-label="Help">?</button>
-    </div>
+    <div id="tmTableLabel" data-i18n="tm.table_label" style="display:none;">Transition Table </div>
     <div id="tmTable"></div>
   </div>
 </div>
@@ -778,10 +766,7 @@
 
 <div class="split-container">
   <div id="leftPane" class="panel">
-    <h2>
-      <span data-i18n="title.palette">Domino palette</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="domino_palette" aria-label="Help">?</button>
-    </h2>
+    <h2 data-i18n="title.palette">Domino palette</h2>
     <div class="small-note" data-i18n="note.palette">
       Dominoes are grouped and color-coded by construction step. When “MPCP ⇒ PCP” is checked, you see the PCP instance, but still separated by their original steps.
     </div>
@@ -790,10 +775,7 @@
     <hr style="margin: 0.9rem 0; border: none; border-top: 1px solid var(--panel-border);">
 
 <div id="solverPanel">
-      <h2 id="solverTitle" style="margin-top:0;">
-        <span id="solverTitleText" data-i18n="solver.title_mpcp">MPCP Solver (bounded)</span>
-        <button type="button" class="help-btn help-btn-inline" data-help="solver_bounded" aria-label="Help">?</button>
-      </h2>
+      <h2 id="solverTitle" data-i18n="solver.title_mpcp" style="margin-top:0;">MPCP Solver (bounded)</h2>
       <div class="small-note" data-i18n="solver.note">
         PCP is undecidable. This solver performs a bounded search and may fail even if a solution exists.
       </div>
@@ -805,24 +787,15 @@
 
       <div style="display:flex; flex-wrap:wrap; gap:0.6rem; margin-top:0.75rem; align-items:flex-end;">
         <div>
-          <label for="solverDepth" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.depth_label">Max depth:</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_max_depth" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverDepth" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.depth_label">Max depth:</label><br>
           <input type="text" id="solverDepth" value="20" style="min-width:5.5rem;">
         </div>
         <div>
-          <label for="solverTime" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.time_label">Time limit (ms):</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_time_limit" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverTime" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.time_label">Time limit (ms):</label><br>
           <input type="text" id="solverTime" value="1500" style="min-width:7rem;">
         </div>
         <div>
-          <label for="solverNodes" style="font-weight:600; font-size:0.85rem;">
-            <span data-i18n="solver.nodes_label">Node limit:</span>
-            <button type="button" class="help-btn help-btn-inline" data-help="solver_node_limit" aria-label="Help">?</button>
-          </label><br>
+          <label for="solverNodes" style="font-weight:600; font-size:0.85rem;" data-i18n="solver.nodes_label">Node limit:</label><br>
           <input type="text" id="solverNodes" value="200000" style="min-width:7rem;">
         </div>
 
@@ -846,10 +819,7 @@
   <div id="divider" class="divider" title="Drag to resize"></div>
 
   <div id="rightPane" class="panel">
-    <h2>
-      <span data-i18n="title.workspace">Workspace (sequence of dominoes)</span>
-      <button type="button" class="help-btn help-btn-inline" data-help="workspace" aria-label="Help">?</button>
-    </h2>
+    <h2 data-i18n="title.workspace">Workspace (sequence of dominoes)</h2>
     <div class="small-note" data-i18n="note.workspace">
       Drop tiles here in order. You can reorder or delete individual tiles. The Top/Bottom strings below are color-coded according to the step each symbol came from.
     </div>
@@ -1468,7 +1438,7 @@
     }
 
     if (label) {
-      label.style.display = "flex";
+      label.style.display = "block";
     }
 
     // Build column order: marker first, blank last, everything else in-between
@@ -2332,8 +2302,7 @@
     }
 
     function updateSolverTitle() {
-      // Title text is inside the h2 so the help button remains visible.
-      const titleEl = document.getElementById("solverTitleText") || document.getElementById("solverTitle");
+      const titleEl = document.getElementById("solverTitle");
       if (!titleEl) return;
       const usePCP = document.getElementById("toggleMPCP")?.checked;
       const key = usePCP ? "solver.title_pcp" : "solver.title_mpcp";

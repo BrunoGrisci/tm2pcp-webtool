@@ -244,3 +244,11 @@ If you use this tool in academic work (papers, theses, technical reports, or tea
   url          = {https://github.com/brunogrisci/tm2pcp-webtool},
   note         = {Educational web-based software},
 }
+```
+
+## 🔗 See also
+
+- **PCP → CFG Ambiguity webtool**  
+  Web app: https://brunogrisci.github.io/pcp2cfg  
+  Repository: https://github.com/BrunoGrisci/pcp2cfg-webtool  
+  This companion tool turns PCP domino sets into context-free grammars to explore ambiguity. Export your dominoes from tm2pcp as CSV and load them in pcp2cfg to continue the analysis on the resulting grammar and its ambiguous derivations.

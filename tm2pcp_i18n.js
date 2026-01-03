@@ -13,6 +13,7 @@ const I18N = {
     "label.input_word": "Input word:",
     "label.generate_btn": "Generate dominoes",
     "button.export_csv": "Export CSV",
+    "button.load_example": "Load example",
     "tooltip.export_csv": "Export the currently displayed domino set as a CSV file.",
     "status.export_none": "Nothing to export: generate dominoes first.",
     "status.export_ok": "Exported {N} dominoes to {FILE}.",
@@ -46,6 +47,7 @@ const I18N = {
 
     // Status messages
     "status.tm_parsed_ok": "Turing machine parsed successfully.",
+    "status.example_loaded": "Example Turing machine loaded. Click “Generate dominoes”.",
     "status.parse_error": "Error parsing .mt file: {ERR}",
     "status.no_mpcp": "No MPCP dominoes to display.",
     "status.need_mt": "Please load a .mt file first.",
@@ -59,6 +61,9 @@ const I18N = {
     "about.developed_by_label": "Developed by Prof. Bruno Iochins Grisci",
     "about.built_with": "(Webtool built using Generative AI — ChatGPT 5.1)",
     "about.based_on": "Based and inspired by the class of Prof. Rodrigo Machado:",
+    "about.pcp2cfg_hint_html":
+      "You can also export the dominoes and try them in the <strong>PCP → CFG Ambiguity</strong> webtool: " +
+      "<a href=\"https://brunogrisci.github.io/pcp2cfg\" target=\"_blank\" rel=\"noopener noreferrer\">pcp2cfg</a>.",
     "about.input_label": "Input format:",
     "about.input_sentence1":
       "This webtool accepts a .mt file describing a Turing Machine created using the Simulador de Máquina de Turing developed by Prof. Rodrigo Machado:",
@@ -388,6 +393,24 @@ const I18N = {
       "<p>" +
       "Note that the export reflects exactly what is shown on screen: changing the mode (MPCP vs. PCP) or the input machine " +
       "will change the contents of the exported file." +
+      "</p>",
+
+    "help.load_example.title": "Load example",
+    "help.load_example.body_html":
+      "<p>" +
+      "Loads the bundled example Turing Machine and clears the palette, solver, and workspace. Use this to quickly try the tool without providing a file." +
+      "</p>" +
+      "<h4 style=\"margin-top:0.8em;\">Example machine</h4>" +
+      "<ul>" +
+      "  <li><strong>Input alphabet (Σ):</strong> ( , )</li>" +
+      "  <li><strong>Aux symbols:</strong> X</li>" +
+      "  <li><strong>Marker:</strong> ©</li>" +
+      "  <li><strong>Blank:</strong> β</li>" +
+      "  <li><strong>States:</strong> q0, q1, q2, qA, qR (q0 initial, qA accepting)</li>" +
+      "  <li><strong>Goal:</strong> recognize balanced parentheses</li>" +
+      "</ul>" +
+      "<p>" +
+      "After clicking <strong>Load example</strong>, type an input word (e.g., a string of parentheses) and press <strong>Generate dominoes</strong> to build the (M)PCP instance." +
       "</p>",
 
     "help.transition_table.title": "Transition table",
@@ -770,6 +793,7 @@ const I18N = {
     "label.input_word": "Palavra de entrada:",
     "label.generate_btn": "Gerar dominós",
     "button.export_csv": "Exportar CSV",
+    "button.load_example": "Carregar exemplo",
     "tooltip.export_csv": "Exporta o conjunto de dominós atualmente exibido para um arquivo CSV.",
     "status.export_none": "Nada para exportar: gere os dominós primeiro.",
     "status.export_ok": "Exportados {N} dominós para {FILE}.",
@@ -804,6 +828,7 @@ const I18N = {
 
     // Status messages
     "status.tm_parsed_ok": "Máquina de Turing carregada com sucesso.",
+    "status.example_loaded": "Exemplo de máquina de Turing carregado. Clique em “Gerar dominós”.",
     "status.parse_error": "Erro ao interpretar o arquivo .mt: {ERR}",
     "status.no_mpcp": "Nenhum dominó de PCPM para exibir.",
     "status.need_mt": "Por favor, carregue um arquivo .mt primeiro.",
@@ -818,6 +843,9 @@ const I18N = {
     "about.developed_by_label": "Desenvolvido por Prof. Bruno Iochins Grisci",
     "about.built_with": "(Ferramenta web criada com IA generativa — ChatGPT 5.1)",
     "about.based_on": "Baseada e inspirada na aula do Prof. Rodrigo Machado:",
+    "about.pcp2cfg_hint_html":
+      "Você pode exportar os dominós e usá-los também na ferramenta <strong>PCP → Ambiguidade de GLC</strong>: " +
+      "<a href=\"https://brunogrisci.github.io/pcp2cfg\" target=\"_blank\" rel=\"noopener noreferrer\">pcp2cfg</a>.",
     "about.input_label": "Formato de entrada:",
     "about.input_sentence1":
       "Esta ferramenta aceita um arquivo .mt descrevendo uma Máquina de Turing criada com o Simulador de Máquina de Turing desenvolvido pelo Prof. Rodrigo Machado:",
@@ -1149,6 +1177,24 @@ const I18N = {
       "<p>" +
       "Observe que a exportação reflete exatamente o que está visível na tela: alterar o modo (PCPM vs. PCP) ou a máquina de entrada " +
       "modificará o conteúdo do arquivo exportado." +
+      "</p>",
+
+    "help.load_example.title": "Carregar exemplo",
+    "help.load_example.body_html":
+      "<p>" +
+      "Carrega a Máquina de Turing de exemplo integrada e limpa a paleta, o solucionador e a área de trabalho. Use para testar rapidamente sem fornecer um arquivo." +
+      "</p>" +
+      "<h4 style=\"margin-top:0.8em;\">Máquina de exemplo</h4>" +
+      "<ul>" +
+      "  <li><strong>Alfabeto de entrada (Σ):</strong> ( , )</li>" +
+      "  <li><strong>Símbolos auxiliares:</strong> X</li>" +
+      "  <li><strong>Marcador:</strong> ©</li>" +
+      "  <li><strong>Branco:</strong> β</li>" +
+      "  <li><strong>Estados:</strong> q0, q1, q2, qA, qR (q0 inicial, qA de aceitação)</li>" +
+      "  <li><strong>Objetivo:</strong> reconhecer parênteses balanceados</li>" +
+      "</ul>" +
+      "<p>" +
+      "Depois de clicar em <strong>Carregar exemplo</strong>, digite uma palavra de entrada (por exemplo, uma sequência de parênteses) e pressione <strong>Gerar dominós</strong> para construir a instância de (M)PCP." +
       "</p>",
 
     "help.transition_table.title": "Tabela de transições",

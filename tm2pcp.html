@@ -663,7 +663,7 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      gtag('config', 'G-PG6S1LBB4Y');
+  gtag('config', 'G-PG6S1LBB4Y');
     </script>
 
 </head>
@@ -699,6 +699,12 @@
   </a>
 </div>
 
+<div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;"
+     data-i18n-html="about.pcp2cfg_hint_html">
+  You can also export the dominoes and try them in the <strong>PCP → CFG Ambiguity</strong> webtool:
+  <a href="https://brunogrisci.github.io/pcp2cfg" target="_blank" rel="noopener noreferrer">pcp2cfg</a>.
+</div>
+
 <div style="margin: 0.6rem 0 1.2rem 0; font-size:0.85rem; line-height:1.35;">
   <strong data-i18n="about.input_label">Input format:</strong><br>
   <span data-i18n="about.input_sentence1">
@@ -720,6 +726,10 @@
       <button type="button" class="help-btn help-btn-inline" data-help="mt_file" aria-label="Help">?</button>
     </label>
     <input type="file" id="mtFile" accept=".mt">
+  </div>
+  <div style="display:flex; align-items:flex-end; gap:0.35rem;">
+    <button id="loadExampleBtn" data-i18n="button.load_example" style="height:2rem;">Load example</button>
+    <button type="button" class="help-btn help-btn-inline" data-help="load_example" aria-label="Help">?</button>
   </div>
   <div>
     <label for="inputWord">
@@ -900,6 +910,17 @@
   let currentTM = null;
   let mpcpDominoes = [];
   let currentDominoes = [];
+
+  // Built-in example TM (balanceamentoPCP2.mt)
+  const EXAMPLE_MT_BALANCEAMENTO = `(,)\n` +
+    `X\n` +
+    `©\n` +
+    `β\n` +
+    `q0,q1,q2,qA,qR\n` +
+    `q0\n` +
+    `qA\n` +
+    `q0,(,,q1,X,D,,,q0,),,qR,),D,,,q0,X,,q0,X,D,,,q0,©,,q0,©,D,,,q0,β,,qA,β,D,,,q1,(,,q1,(,D,,,q1,),,q2,X,E,,,q1,X,,q1,X,D,,,q1,©,,qR,©,D,,,q1,β,,qR,β,D,,,q2,(,,q2,(,E,,,q2,),,q2,),E,,,q2,X,,q2,X,E,,,q2,©,,q0,©,D,,,q2,β,,q2,β,E,,,\n` +
+    `balanceamento de ()`;
 
   // ---- Diagnostics: confirm i18n file loaded correctly ----
   console.log("[tm2pcp] i18n loaded?", {
@@ -2106,6 +2127,11 @@
     reader.readAsText(file);
   });
 
+  const loadExampleBtn = document.getElementById('loadExampleBtn');
+  if (loadExampleBtn) {
+    loadExampleBtn.addEventListener('click', loadExampleTM);
+  }
+
 
   document.getElementById('generateBtn').addEventListener('click', () => {
     if (!currentTM) {
@@ -2329,6 +2355,30 @@
       concatWorkspaceStrings();
       resetSolverBoard();
       setSolverPanelEnabled(false);
+    }
+
+    function loadExampleTM() {
+      resetDominoWorkspaceAndSolver();
+      try {
+        currentTM = parseMt(EXAMPLE_MT_BALANCEAMENTO);
+
+        const fileInput = document.getElementById('mtFile');
+        if (fileInput) fileInput.value = "";
+
+        const inputWordEl = document.getElementById('inputWord');
+        if (inputWordEl) {
+          inputWordEl.value = "";
+          inputWordEl.classList.remove("invalid-input");
+        }
+
+        renderTMInfo(currentTM);
+        setStatusFromKey("status.example_loaded");
+      } catch (err) {
+        console.error(err);
+        setStatusFromKey("status.parse_error", { ERR: err.message }, true);
+        currentTM = null;
+        renderTMInfo(null);
+      }
     }
 
     function updateSolverTitle() {

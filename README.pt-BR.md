@@ -244,5 +244,12 @@ Se você utilizar esta ferramenta em trabalhos acadêmicos (artigos, teses, rela
   url          = {https://github.com/brunogrisci/tm2pcp-webtool},
   note         = {Software educacional baseado na web},
 }
+```
 
+## 🔗 Veja também
+
+- **Webtool PCP → Ambiguidade de GLC**  
+  Web app: https://brunogrisci.github.io/pcp2cfg  
+  Repositório: https://github.com/BrunoGrisci/pcp2cfg-webtool  
+  Ferramenta complementar que converte conjuntos de dominós de PCP em gramáticas livres de contexto para estudar ambiguidade. Exporte os dominós do tm2pcp em CSV e carregue no pcp2cfg para seguir a análise na gramática resultante e em suas derivações ambíguas.
 

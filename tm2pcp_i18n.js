@@ -14,6 +14,7 @@ const I18N = {
     "label.generate_btn": "Generate dominoes",
     "button.export_csv": "Export CSV",
     "button.load_example": "Load example",
+    "button.load_string": "Load example", // legacy key safeguard
     "tooltip.export_csv": "Export the currently displayed domino set as a CSV file.",
     "status.export_none": "Nothing to export: generate dominoes first.",
     "status.export_ok": "Exported {N} dominoes to {FILE}.",
@@ -794,6 +795,7 @@ const I18N = {
     "label.generate_btn": "Gerar dominós",
     "button.export_csv": "Exportar CSV",
     "button.load_example": "Carregar exemplo",
+    "button.load_string": "Carregar exemplo", // chave legada para compatibilidade
     "tooltip.export_csv": "Exporta o conjunto de dominós atualmente exibido para um arquivo CSV.",
     "status.export_none": "Nada para exportar: gere os dominós primeiro.",
     "status.export_ok": "Exportados {N} dominós para {FILE}.",
